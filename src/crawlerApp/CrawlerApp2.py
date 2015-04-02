@@ -128,12 +128,12 @@ USA = 'us'
 ============================================================================================
 '''
 # print('Start thread get like share comments')
-url_sharelikecomment_queue = queue.Queue()
+url_sharelikecomment_queue = queue.Queue(10)
 share_like_comment_thread = CommentLikeShrareGetterThread(queue=url_sharelikecomment_queue)
 share_like_comment_thread.start()
 
 print('Start thread to post to page')
-post_queue = queue.Queue()
+post_queue = queue.Queue(20)
 page_poster_thread = PostToFacebookPage(queue=post_queue)
 page_poster_thread.start()
 '''

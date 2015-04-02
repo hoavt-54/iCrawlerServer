@@ -11,7 +11,7 @@ import time
 from crawlerApp.utils import get_consine_text, normalize_text
 
 
-DB_HOST = "192.168.5.109"
+DB_HOST = "192.168.1.82"
 DB_USER_NAME = "root"
 DB_PASSWORD = ""
 DB_NAME = "iii_news_db"

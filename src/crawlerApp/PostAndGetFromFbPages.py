@@ -182,7 +182,7 @@ class PostToFacebookPage(Thread):
                         print(db_thread.update_article_fbid(next_article.url, result['id']))
                 except Exception as e:
                     print("Error when post article to FB pages: {}".format(e))
-                time.sleep(5)
+                time.sleep(3)
         except Exception as db_e:
             print("Error database thread post to Facebook: {}".format(db_e))
         finally:
