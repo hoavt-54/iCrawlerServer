@@ -374,7 +374,7 @@ def extract_washington_post_article(article, is_on_homepage, predifined_category
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
              
          
          
@@ -650,7 +650,7 @@ def extract_abcnews_article(article, is_on_homepage, predifined_category=None):
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(article.url, True)
     article.url = article.url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
          
          
         
@@ -944,7 +944,7 @@ def extract_latimes_article(article, is_on_homepage, predifined_category=None):
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
        
        
       

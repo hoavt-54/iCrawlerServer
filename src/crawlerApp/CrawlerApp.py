@@ -262,7 +262,7 @@ def extract_cnn_article (article, is_on_homepage, predifined_category=None):
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
 
 
 #0169 443 7589
@@ -796,7 +796,7 @@ def extract_usatoday_article(article, is_on_homepage, predifined_category=None):
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
               
               
               
@@ -1173,7 +1173,7 @@ def extract_people_article(article, is_on_homepage, predifined_category=None):
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
        
        
       
@@ -1511,7 +1511,7 @@ def extract_forbes_article(article, is_on_homepage, predifined_category=None):
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
       
       
      

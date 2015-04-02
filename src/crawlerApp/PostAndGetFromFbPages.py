@@ -10,13 +10,14 @@ import requests
 from threading import Thread
 import time
 import urllib.parse
-
+import sys,os
+sys.path.append(os.path.realpath('..'))
 from crawlerApp import utils
 from fbsdk import facebook
 from iiidatabase.DatabaseConnectionLib import IIIDatbaseConnection
 
 
-FB_LONGLIVE_ACTK = "CAAUCZBoyBGpUBACo0GuUx75S24R9nzHz8rOPZAXQZBJGzZBKv6dJOjiM2EAbmxKiWZApxQPW0sSlpVAfFu2ZAqzDr5MdbTUxwstdaFWNTbVe4hs68J0NhlPGdN16Fr5BpEZBb9mlxNm7XjQSxARZCos40An5pcVkuUFodWZAQanjJrZCL20xDqyZCmHqaZBdGdgYbHGCBt8c1LqULzjmZA8nL3sNj"
+
 IIIN_SERVER_APP_ID="1410650005904021"
 IIIN_SERVER_SERCRET = '52c5ce6ee56af4221c6215f3fc1418d4'
 FB_REST_API = 'http://api.facebook.com/restserver.php'
@@ -85,18 +86,19 @@ class CommentLikeShrareGetterThread(Thread):
 
 
 
-                    
-FB_LONGLIVE_ACTK = "CAAUCZBoyBGpUBACo0GuUx75S24R9nzHz8rOPZAXQZBJGzZBKv6dJOjiM2EAbmxKiWZApxQPW0sSlpVAfFu2ZAqzDr5MdbTUxwstdaFWNTbVe4hs68J0NhlPGdN16Fr5BpEZBb9mlxNm7XjQSxARZCos40An5pcVkuUFodWZAQanjJrZCL20xDqyZCmHqaZBdGdgYbHGCBt8c1LqULzjmZA8nL3sNj"
-IIIN_SERVER_APP_ID="1410650005904021"
-IIIN_SERVER_SERCRET = '52c5ce6ee56af4221c6215f3fc1418d4'
-
-pages_id = ["657808134330750", '1417094931918673', 
-            '329570850574813', '1592315347647071',
-            '1401344456845009', '445841905563902',
-            '778046915618571'
+pages_id = ['1401344456845009', '778046915618571', '329570850574813',
+            '647633765368739', '1594539410758135', '657808134330750',
+            '1417094931918673', '753548271381696', '1592315347647071',
+            '445841905563902', '799881623421852', '350678428455274', 
+            '1574182962841454', '414583335389044', '1571382756463440',
+            '388362948009298', '1588907418029083', '799495940143171', 
+            '328827617326389', '353668731505591', '592177567585710', 
+            '806091826127482', '680882785351524', '557816184358955', 
+            '880828675311080', '1394037944249687', '1617904361758199',
+            '1588155624772622', '361880147332574'
             ]
 
-
+TOKEN_TIMEOUT = 40 * 24 * 60 * 60
 pages_tokens = {}  
     
 def get_api(access_token, page_id):
@@ -126,6 +128,8 @@ class PostToFacebookPage(Thread):
         self.name= "Thread_post_2_facebook_page"
         self.queue = queue;
         self.is_running = True
+        self.FB_LONGLIVE_ACTK = None
+        self.LAST_TIME_GET_TOKEN = 0
     
     def stop_running (self):
         self.is_running = False
@@ -144,12 +148,20 @@ class PostToFacebookPage(Thread):
             while self.is_running:
                 try:
                     next_article = self.queue.get(True)
+                    ''' sometime post bloomberg image causing error: (#100) picture URL is not properly formatted '''
                     if (next_article == None or next_article == POISON):
                         self.stop_running()
                         break
+                    if ('bloomberg' in next_article.url or next_article.thumbnail_url is None):
+                        next_article.thumbnail_url ='http://www.leoncidesign.com/images/placeholder.png'
+                    if (int(time.time()) - self.LAST_TIME_GET_TOKEN > TOKEN_TIMEOUT):
+                        with open ("../../fb_token.txt", "r") as myfile:
+                            self.FB_LONGLIVE_ACTK =myfile.read().replace('\n', '')
+                            self.LAST_TIME_GET_TOKEN = int(time.time())
+                            print("refreshed Facebook token")
                     page_id_position = posts_count % len(pages_id) # post to all pages by each one
                     posts_count += 1
-                    api = get_api(FB_LONGLIVE_ACTK, pages_id[page_id_position])
+                    api = get_api(self.FB_LONGLIVE_ACTK, pages_id[page_id_position])
                     msg = ""
                     attchment = {"name": next_article.title,
                              "link": next_article.url,
@@ -160,6 +172,11 @@ class PostToFacebookPage(Thread):
                     
                     if (result is None or result['id'] is None):
                         print("Cannot post " + next_article.url + " to FB page")
+                        ''' put to queue to retry later'''
+                        try:
+                            self.queue.put(next_article, True)
+                        except Exception as e1:
+                            print ('put to queue to retry later')
                     else: # save id to database
                         print("postId: " + result['id'])
                         print(db_thread.update_article_fbid(next_article.url, result['id']))

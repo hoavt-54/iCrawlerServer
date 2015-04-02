@@ -895,7 +895,7 @@ def extract_newyorktime_article(article, is_on_homepage, predifined_category=Non
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
            
            
            
@@ -1398,7 +1398,7 @@ def extract_nbcnews_article(article, is_on_homepage, predifined_category=None):
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
          
          
          

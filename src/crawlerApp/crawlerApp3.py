@@ -325,7 +325,7 @@ def extract_bloomberg_article(article, is_on_homepage, predifined_category=None)
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(article.url, True)
     article.url = article.url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
        
        
       
@@ -610,7 +610,7 @@ def extract_foxnews_article(article, is_on_homepage, predifined_category=None):
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
       
       
      
@@ -871,7 +871,7 @@ def extract_espn_article(article, is_on_homepage, predifined_category=None):
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
       
       
      
@@ -1156,7 +1156,7 @@ def extract_buzzfeed_article(article, is_on_homepage, predifined_category=None):
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
      
      
     

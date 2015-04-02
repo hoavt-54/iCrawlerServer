@@ -18,9 +18,7 @@ from fbsdk import facebook
 from iiidatabase.DatabaseConnectionLib import IIIDatbaseConnection
 
 
-FB_LONGLIVE_ACTK = "CAAUCZBoyBGpUBACo0GuUx75S24R9nzHz8rOPZAXQZBJGzZBKv6dJOjiM2EAbmxKiWZApxQPW0sSlpVAfFu2ZAqzDr5MdbTUxwstdaFWNTbVe4hs68J0NhlPGdN16Fr5BpEZBb9mlxNm7XjQSxARZCos40An5pcVkuUFodWZAQanjJrZCL20xDqyZCmHqaZBdGdgYbHGCBt8c1LqULzjmZA8nL3sNj"
-IIIN_SERVER_APP_ID="1410650005904021"
-IIIN_SERVER_SERCRET = '52c5ce6ee56af4221c6215f3fc1418d4'
+
 FB_REST_API = 'http://api.facebook.com/restserver.php'
 TWITTER_URL_API = 'http://urls.api.twitter.com/1/urls/count.json'
 POISON = "quite_queue"
@@ -108,7 +106,6 @@ class StatisticGetterThread(Thread):
 
 
 
-FB_LONGLIVE_ACTK = "CAAUCZBoyBGpUBACo0GuUx75S24R9nzHz8rOPZAXQZBJGzZBKv6dJOjiM2EAbmxKiWZApxQPW0sSlpVAfFu2ZAqzDr5MdbTUxwstdaFWNTbVe4hs68J0NhlPGdN16Fr5BpEZBb9mlxNm7XjQSxARZCos40An5pcVkuUFodWZAQanjJrZCL20xDqyZCmHqaZBdGdgYbHGCBt8c1LqULzjmZA8nL3sNj"
 IIIN_SERVER_APP_ID="1410650005904021"
 IIIN_SERVER_SERCRET = '52c5ce6ee56af4221c6215f3fc1418d4'
 
@@ -143,7 +140,7 @@ sources_page_id = ['5550296508', '18793419640',
                    
                    ]
 pages_toke = {}  
-    
+TOKEN_TIMEOUT = 40 * 24 * 60 * 60
 def get_api(access_token, page_id):
     graph = facebook.GraphAPI(access_token)
     # Get page token to post as the page. You can skip 
@@ -178,6 +175,8 @@ class GetFacebookPostForUrl(Thread):
         Thread.__init__(self)
         self.name= "Thread_post_2_facebook_page"
         self.is_running = True
+        self.FB_LONGLIVE_ACTK = None
+        self.LAST_TIME_GET_TOKEN = 0
     
     def stop_running (self):
         self.is_running = False
@@ -194,9 +193,14 @@ class GetFacebookPostForUrl(Thread):
             
             while self.is_running:
                 try:
+                    if (int(time.time()) - self.LAST_TIME_GET_TOKEN > TOKEN_TIMEOUT):
+                        with open ("../../fb_token.txt", "r") as myfile:
+                            self.FB_LONGLIVE_ACTK =myfile.read().replace('\n', '')
+                            self.LAST_TIME_GET_TOKEN = int(time.time())
+                            print("refreshed Facebook token")
                     for source_id in sources_page_id:
                         print("=============== sourceid: " + source_id + "   ===============")
-                        api = get_api(FB_LONGLIVE_ACTK, '657808134330750')
+                        api = get_api(self.FB_LONGLIVE_ACTK, '657808134330750')
                         posts = api.get_object(id=source_id +'/posts')
                         #print(posts['data'])
                         for post in posts['data']:

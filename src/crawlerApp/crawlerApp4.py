@@ -369,7 +369,7 @@ def extract_everydayheathy_article(article, is_on_homepage, predifined_category=
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
     
     
    
@@ -610,7 +610,7 @@ def extract_eonline_article(article, is_on_homepage, predifined_category=None):
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
     
     
    
@@ -857,7 +857,7 @@ def extract_techcrunch_article(article, is_on_homepage, predifined_category=None
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
     
     
    
@@ -1112,7 +1112,7 @@ def extract_bleacher_article(article, is_on_homepage, predifined_category=None):
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
    
    
   
@@ -1361,7 +1361,7 @@ def extract_vogue_article(article, is_on_homepage, predifined_category=None):
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
      
      
     
@@ -1665,7 +1665,7 @@ def extract_cbsnews_article(article, is_on_homepage, predifined_category=None):
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
-    #post_queue.put(article, True)
+    post_queue.put(article, True)
       
       
      
