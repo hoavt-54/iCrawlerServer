@@ -1,42 +1,45 @@
 '''
-Created on Feb 28, 2015
+Created on Mar 10, 2015
 
 @author: hoavu
 '''
 import calendar
 from datetime import datetime
 from dateutil.parser import parse
+import json
 from lxml import html
 import newspaper
 from newspaper.article import Article
 from pytz import timezone
-import requests
+import pytz
 import queue
-import json
+import re
+import requests
+import time
 
-normalized_url = 'http://www.bloomberg.com/news/articles/2015-05-26/oil-producer-strikes-financing-deal-with-franklin-square-capital'
+
+normalized_url = 'http://www.theblaze.com/stories/2015/04/22/ancient-pottery-shards-analyzed-by-israeli-scientists-seem-to-support-biblical-narrative/'
 thumbnail_url = None
 short_description = None
-category_id = None
 time_string = None
+category_id = None
 title = None
 article_page = requests.get(normalized_url)
 #html_tree = html.fromstring(article.html)
 html_tree = html.fromstring(article_page.text)
 
+#get time
+try:
+    time_string = html_tree.xpath('//meta[@name="dc.date"]')[0].attrib['content']
+    print("extracted time: " + time_string)
+except BaseException as dateE:
+    print("problem with time: {}".format(dateE))
+    
 
-try:
-    time_string = html_tree.xpath('//meta[@name="parsely-pub-date"]')[0].attrib['content']
-except BaseException as dateE:
-    print("problem with time: {}".format(dateE))
-try:
-    if time_string is None:
-        time_string = html_tree.xpath('//time[@itemprop="datePublished"]')[0].attrib['datetime']
-except BaseException as dateE:
-    print("problem with time: {}".format(dateE))
 date_time = parse(time_string)
 published_time = calendar.timegm(date_time.utctimetuple())
- 
+print("time saved: ")
+print(datetime.fromtimestamp(published_time))
 print(published_time)
 
 
@@ -54,22 +57,17 @@ print(title)
 
 # get thumbnail
 try:
-    thumbnail_url = html_tree.xpath('//meta[@property="og:image"]')[0].attrib['content']
+    thumbnail_url = html_tree.xpath('//meta[@name="twitter:image"]')[0].attrib['content']
     print(thumbnail_url)
 except Exception as e:
     print('Thumbnaill not found.'.format(e))
 try:
     if(thumbnail_url is None):
-        thumbnail_url = html_tree.xpath('//meta[@name="parsely-image-url"]')[0].attrib['content']
+        thumbnail_url = html_tree.xpath('//meta[@name="tbi-image"]')[0].attrib['content']
         print(thumbnail_url)
 except Exception as e:
     print('Thumbnaill not found again'.format(e))
-try:
-    if(thumbnail_url is None):
-        thumbnail_url = html_tree.xpath('//meta[@name="thumbnail"]')[0].attrib['content']
-        print(thumbnail_url)
-except Exception as e:
-    print('Thumbnaill not found again'.format(e))
+
 
     
     
@@ -87,21 +85,9 @@ try:
 except Exception as e:
     print('Description not found again'.format(e))
 
-
-
-# get category
+#get category
 try:
-    category_id = html_tree.xpath('//meta[@name="parsely-section"]')[0].attrib['content']
+    category_id = html_tree.xpath('//meta[@itemprop="articleSection"]')[0].attrib['content']
 except Exception as e:
-    print('Category not found'.format(e))
-    
-try:
-    if category_id is None:
-        category_id = html_tree.xpath('//meta[@name="category"]')[0].attrib['content']
-except Exception as e:
-    print('Category not found again'.format(e))
-    
-    
-if (category_id is not None):
-    category_id = category_id.split(",")[0]
+    print('category not found. {}'.format(e))
 print(category_id)

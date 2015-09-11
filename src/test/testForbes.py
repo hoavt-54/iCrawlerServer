@@ -18,7 +18,7 @@ import requests
 import time
 
 
-normalized_url = 'http://www.forbes.com/sites/forbestravelguide/2015/02/25/spending-two-perfect-days-in-the-bahamas/'
+normalized_url = 'http://www.forbes.com/sites/ellenhuet/2015/04/22/google-unveils-wireless-service-project-fi/'
 thumbnail_url = None
 short_description = None
 time_string = None

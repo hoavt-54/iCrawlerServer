@@ -5,6 +5,7 @@ Created on Feb 24, 2015
 '''
 from collections import Counter
 import nltk
+import time
 import re, math
 import requests
 import urllib.parse
@@ -21,10 +22,21 @@ def hasNumbers(inputString):
     return any(char.isdigit() for char in inputString)
 
 def normalize_url (url):
-    url = url.split("?")[0].split("#")[0];
+    if ('http://abcnews.go.com/' in url):
+        url = url.split("#")[0].split("&")[0];
+    else:
+        url = url.split("?")[0].split("#")[0];
+        
+    if('www.foxnews.com/' in url):
+        return url
     print('url before open: ' + url)
-    resp = urlopen(url)
-    return resp.url.split("?")[0].split("#")[0];
+    resp = requests.get(url)
+    if (resp is None or resp.url is None):
+        return None
+    if ('http://abcnews.go.com/' in resp.url):
+        return resp.url.split("#")[0].split("&")[0].split("?cid=fb")[0];
+    else:
+        return resp.url.split("?")[0].split("#")[0];
 
 def convert_vn_date (vn_date):
     for key in vn_date_dict:
@@ -34,7 +46,10 @@ def convert_vn_date (vn_date):
 def get_text_html_saulify (url):
     clean_url = 'http://saulify.me/clean?u='
     clean_url = clean_url + urllib.parse.quote_plus(url)
-    article_page = requests.get(clean_url)
+    try:
+        article_page = requests.get(clean_url)
+    except Exception as e:
+        return "try again later!"
     return article_page.text
 
 WORD = re.compile(r'\w+')
@@ -99,8 +114,41 @@ def normalize_text_nostop (text):
         normalised_string1 +=  lmtzr.stem(word) +" "
     #print("normalised: " +normalised_string1)
     return normalised_string1;
+def time_from_short_string (s):
+    s = s.strip()
+    total = 0
+    if (len(s.split(" ")) > 1):
+        for sub_s in s.split(" "):
+            total = total + time_from_short_string(sub_s)
+        return total
+    if ('d' in s):
+        day_number = int(s.replace('d',''))
+        return day_number*24*60*60
+    elif('h' in s):
+        hour_number = int(s.replace('h', ''))
+        return hour_number*60*60
+    elif('m' in s):
+        min_number = int(s.replace('m', ''))
+        return min_number*60
 
+def unix_time_to_string(unix_time):
+    difference = time.time() - unix_time
+    if(difference < 1800):
+        return "Few minutes ago"
+    elif (difference < 3600):
+        return str(int(difference/60) ) + " minutes ago"
+    elif (difference < 86400):
+        return str(int(difference/3600) ) + " hours ago"
+    elif (difference < 162800):
+        return "Yesterday"
+    else:
+        return str(int(difference/86400) ) + " days ago"
 # def get_text_html_
 
-# url = ' http://cnn.it/1FR64kT'
+#url = 'http://abcnews.go.com/International/ray-scan-uncovers-boy-smuggled-suitcase/story?id=30902130&cid=fb_abcn_sf'
 # print(normalize_url(url))
+
+#print(time_from_short_string('1d  '))
+#print(unix_time_to_string(1428883200))
+# url="http://bzfd.it/1QgnTfK"
+#print(normalize_url(url))

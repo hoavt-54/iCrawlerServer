@@ -14,7 +14,7 @@ import requests
 import queue
 import json
 
-normalized_url = 'http://www.latimes.com/food/dailydish/la-fo-newsletter-getting-freekeh-20150310-html-htmlstory.html'
+normalized_url = 'http://www.latimes.com/science/la-he-walks-charlton-flats-20150523-story.html'
 thumbnail_url = None
 short_description = None
 time_string = None
@@ -92,7 +92,7 @@ except Exception as e:
 # get category
 try:
     if category_id is None:
-        category_id = html_tree.xpath('//div[@class="trb_allContentWrapper " ]')[0].attrib['data-content-section']
+        category_id = html_tree.xpath('//div[@class="trb_allContentWrapper" ]')[0].attrib['data-content-section']
 except Exception as e:
     print('Category not found again'.format(e))
 try:

@@ -18,7 +18,7 @@ import requests
 import time
 
 
-normalized_url = 'http://www.cnbc.com/id/102719664'
+normalized_url = 'http://blogs.reuters.com/great-debate/2015/05/29/vladimir-putin-not-planning-ukraine-annexation-but-diplomacy-is-flailing/'
 thumbnail_url = None
 short_description = None
 time_string = None
@@ -28,20 +28,28 @@ article_page = requests.get(normalized_url)
 #html_tree = html.fromstring(article.html)
 html_tree = html.fromstring(article_page.text)
 
-
+    
 try:
-    time_string = html_tree.xpath('//meta[@property="article:published_time"]')[0].attrib['content']
-    print("extracted time: " + time_string)
+    meta_data = html_tree.xpath('//script[@type="application/ld+json"]/text()')[0]
+    print(meta_data)
+    meta_data = json.loads(meta_data)
+    print(meta_data['headline'])
+    print(meta_data['thumbnailUrl'])
+    time_string = meta_data['dateCreated']
+    print(meta_data['articleSection'])
 except BaseException as dateE:
     print("problem with time: {}".format(dateE))
     
-try:
-    if (time_string is None):
-        time_string = html_tree.xpath('//meta[@itemprop="dateCreated"]')[0].attrib['content']
-        print("extracted time: " + time_string)
+try: 
+    meta_data = html_tree.xpath("//meta[@name='parsely-page']")[0].attrib['content']
+    print(meta_data)
+    meta_data = json.loads(meta_data)
+    print(meta_data['title'])
+    print(meta_data['thumbnailUrl'])
+    time_string = meta_data['pub_date']
+    print(meta_data['articleSection'])
 except BaseException as dateE:
     print("problem with time: {}".format(dateE))
-    
 
 date_time = parse(time_string)
 published_time = calendar.timegm(date_time.utctimetuple())
@@ -50,43 +58,9 @@ print(datetime.fromtimestamp(published_time))
 print(published_time)
 
 
-try:
-    title = html_tree.xpath('//meta[@property="og:title"]')[0].attrib['content']
-except Exception as e:
-    print("Title not found")
-
-try:
-    if(title is None):
-        title = html_tree.xpath('//title/text()')[0].split('|')[0]
-except Exception as e:
-    print("Title not found {}".format(e))
-print(title)
-
-# get thumbnail
-try:
-    thumbnail_url = html_tree.xpath('//meta[@name="twitter:image:src"]')[0].attrib['content']
-    print(thumbnail_url)
-except Exception as e:
-    print('Thumbnaill not found.'.format(e))
-try:
-    if(thumbnail_url is None):
-        thumbnail_url = html_tree.xpath('//meta[@property="og:image"]')[0].attrib['content']
-        print(thumbnail_url)
-except Exception as e:
-    print('Thumbnaill not found again'.format(e))
-try:
-    if(thumbnail_url is None):
-        thumbnail_url = html_tree.xpath('//meta[@name="thumbnail"]')[0].attrib['content']
-        print(thumbnail_url)
-except Exception as e:
-    print('Thumbnaill not found again'.format(e))
-
-    
-    
-
 # get description
 try:
-    short_description = html_tree.xpath('//meta[@name="description"]')[0].attrib['content']
+    short_description = html_tree.xpath('//meta[@name="twitter:description"]')[0].attrib['content']
     print(short_description)
 except Exception as e:
     print('Description not found'.format(e))    
@@ -101,6 +75,11 @@ except Exception as e:
 
 # get category
 """ we should extract the word between http://www.nbcnews.com/ and the very next / to get category"""
+result = re.search('nbcnews\.com/((?:[^/])*)/', normalized_url)
+print ("category_id: " + result.group(1))
+sub_group = re.search('news/((?:[^/])*)/', normalized_url)
+print ("sub category_id: " + sub_group.group(1))
+
 try:
     category_id = html_tree.xpath('//meta[@property="article:section"]')[0].attrib['content']
 except Exception as e:

@@ -127,7 +127,10 @@ class GraphAPI(object):
         return self.request(parent_object + "/" + connection_name,
                             post_args=data,
                             method="POST")
-
+    def put_photo_url_2_page (self, message, photo_url, profile_id="me"):
+        return self.put_object(profile_id, "photos", message=message,
+                               url=photo_url)
+    
     def put_wall_post(self, message, attachment={}, profile_id="me"):
         """Writes a wall post to the given profile's wall.
 

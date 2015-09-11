@@ -18,7 +18,7 @@ import requests
 import time
 
 
-normalized_url = 'https://www.joyus.com/beauty/1-2815/get-fuller-lips-without-injections-hosted-by-mikaela-south?utm_source=syndication-people-style-watch'
+normalized_url = 'http://www.people.com/article/gina-dejesus-russian-roulette-cleveland-kidnapping'
 thumbnail_url = None
 short_description = None
 time_string = None

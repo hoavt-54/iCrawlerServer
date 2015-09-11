@@ -18,7 +18,7 @@ import re
 import requests
 
 
-normalized_url = 'http://www.cnn.com/2015/03/14/us/connecticut-sandy-hook-lawsuits/'
+normalized_url = 'http://edition.cnn.com/2015/05/07/news/economy/moldova-stolen-billion/index.html'
 thumbnail_url = None
 short_description = None
 category_id = None
@@ -30,30 +30,42 @@ html_tree = html.fromstring(article_page.text)
 update_time = None
 category_id = None
 title = None
+time_string = None
+published_time= None
 
 
+cnn_body_tag = html_tree.xpath('//section[@data-zn-id="body-text"]')
 
-
-
+print(len(cnn_body_tag))
 
 ''' money cnn format different '''
-if 'http://money.cnn.com' in normalized_url:
-    time_string = html_tree.xpath('//meta[@name="date"]')[0].attrib['content']
-    print("extracted time: " + time_string)
-    datetime_obj = datetime.strptime(time_string, "%Y-%m-%d %H:%M:%S")
-    datetime_obj_tz = datetime_obj.replace(tzinfo=timezone('EST'))
-    update_time = calendar.timegm(datetime_obj_tz.utctimetuple())
-    print("time saved: ")
-    print(datetime.fromtimestamp(update_time, pytz.timezone('America/Los_Angeles')))
-    category_id = 'business'
-else:
+''' money cnn format different '''
+try:
     time_string = html_tree.xpath('//meta[@property="og:pubdate"]')[0].attrib['content']
-    date_time = parse(time_string)
-    print("extracted time: " + time_string)
-    update_time = calendar.timegm(date_time.utctimetuple())
-    print("time saved: ")
-    print(datetime.fromtimestamp(update_time))
-print(update_time)
+except Exception as e:
+    print('time string not found {}.'.format(e))
+try:
+    if(time_string is None):
+        time_string = html_tree.xpath('//meta[@name="pubdate"]')[0].attrib['content']
+except Exception as e:
+    print('time string not found again{}.'.format(e)) 
+try:
+    if(time_string is None):
+        time_string = html_tree.xpath('//span[@class="cnnDateStamp"]/text()')[0]
+        time_string = time_string.replace('2015:', '2015')
+        time_string = time_string.replace('2016:', '2016')
+        time_string = time_string.replace('2017:', '2017')
+        time_string = time_string.replace('2018:', '2018')
+        time_string = time_string.replace('ET', '-4:00')
+except Exception as e:
+    print('time string not found again{}.'.format(e))
+print("etracted time: " + time_string)
+date_time = parse(time_string)
+published_time = calendar.timegm(date_time.utctimetuple())
+    
+print("time saved: ")
+print(datetime.fromtimestamp(published_time))
+print(published_time)
 
 
 title = html_tree.xpath('//meta[@property="og:title"]')[0].attrib['content']

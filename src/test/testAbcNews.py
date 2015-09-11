@@ -17,7 +17,7 @@ import requests
 import time
 
 
-normalized_url = 'http://abcnews.go.com/US/wireStory/utah-house-passes-church-backed-anti-discrimination-bill-29572577'
+normalized_url = 'http://abcnews.go.com/Travel/hottest-vacation-cities-cheapskates/story?id=30555568'
 thumbnail_url = None
 short_description = None
 category_id = None

@@ -11,7 +11,7 @@ import time
 from crawlerApp.utils import get_consine_text, normalize_text
 
 
-DB_HOST = "192.168.1.82"
+DB_HOST = "192.168.1.9 "
 DB_USER_NAME = "root"
 DB_PASSWORD = ""
 DB_NAME = "iii_news_db"
@@ -151,8 +151,9 @@ class IIIDatbaseConnection:
                 return 0'''
         
         sql = "INSERT INTO articles (url, title, source_id, category_id, is_top_story_on_their_site, is_on_home_page, updated_time, thumbnail_url, short_description, country, text_html, text, normalized_title) VALUE (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        result = cursor.execute(sql, (url, title, source_id, category_id, is_top_story, 
+        cursor.execute(sql, (url, title, source_id, category_id, is_top_story, 
                          is_on_homepage, updated_time, thumbnail_url, short_description, country, text_html, text, normalized_title))
+        result  = cursor.lastrowid
         self.db_connection.commit()
         cursor.close()
         return result
@@ -207,11 +208,46 @@ class IIIDatbaseConnection:
     # method to update facebook id
     def update_article_fbid(self, url, facebook_id):
         cursor = self.cursor()
-        sql = "UPDATE articles SET facebook_id = %s where url = %s"
-        result = cursor.execute(sql, (facebook_id, url))
-        self.db_connection.commit()
-        cursor.close()
-        return result
+        sql = ""
+        url2 = ""
+        if ("cnn.com/" in url):
+            if ("edition.cnn.com" in url):
+                url2 = url.replace("edition.cnn.com","www.cnn.com")
+            if ("www.cnn.com" in url):
+                url2 = url.replace("www.cnn.com", "edition.cnn.com")
+            sql = "UPDATE articles SET facebook_id = %s where url in (%s, %s)"
+            result = cursor.execute(sql, (facebook_id, url, url2))
+            self.db_connection.commit()
+            cursor.close()
+            return result
+        else: 
+            sql = "UPDATE articles SET facebook_id = %s where url = %s"
+            result = cursor.execute(sql, (facebook_id, url))
+            self.db_connection.commit()
+            cursor.close()
+            return result
+        
+    # method to update facebook id, facebook photo
+    def update_article_fbid_photo(self, url, facebook_id, fb_thumbnail_id):
+        cursor = self.cursor()
+        sql = ""
+        url2 = ""
+        if ("cnn.com/" in url):
+            if ("edition.cnn.com" in url):
+                url2 = url.replace("edition.cnn.com","www.cnn.com")
+            if ("www.cnn.com" in url):
+                url2 = url.replace("www.cnn.com", "edition.cnn.com")
+            sql = "UPDATE articles SET facebook_id = %s, fb_thumbnail_id = %s where url in (%s, %s)"
+            result = cursor.execute(sql, (facebook_id, fb_thumbnail_id, url, url2))
+            self.db_connection.commit()
+            cursor.close()
+            return result
+        else: 
+            sql = "UPDATE articles SET facebook_id = %s, fb_thumbnail_id = %s where url = %s"
+            result = cursor.execute(sql, (facebook_id, fb_thumbnail_id, url))
+            self.db_connection.commit()
+            cursor.close()
+            return result
     
     #method to update source
     def update_article_source(self, url, source_id):

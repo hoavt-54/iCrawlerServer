@@ -128,12 +128,12 @@ USA = 'us'
 ============================================================================================
 '''
 # print('Start thread get like share comments')
-url_sharelikecomment_queue = queue.Queue(10)
+url_sharelikecomment_queue = queue.Queue(100)
 share_like_comment_thread = CommentLikeShrareGetterThread(queue=url_sharelikecomment_queue)
 share_like_comment_thread.start()
 
 print('Start thread to post to page')
-post_queue = queue.Queue(20)
+post_queue = queue.Queue(30)
 page_poster_thread = PostToFacebookPage(queue=post_queue)
 page_poster_thread.start()
 '''
@@ -147,11 +147,11 @@ page_poster_thread.start()
  
  
  
-          
-          
-          
-          
-         
+           
+           
+           
+              
+             
 '''
 =======================================================================================================================================
 =======================================================================================================================================
@@ -159,9 +159,9 @@ page_poster_thread.start()
 =======================================================================================================================================
 =======================================================================================================================================
 ''' 
-         
              
-             
+                 
+                 
 washington_post_category = {'news' : 'news',
                 'local' : 'news',
                 'national' : 'news',
@@ -178,8 +178,8 @@ washington_post_category = {'news' : 'news',
                 'business' : 'business',
                 'goingoutguide' : 'entertainment',
                 }
-         
              
+                 
 washington_post_except = {'http://www.washingtonpost.com/ed-okeefe/2011/02/02/ABqNUZE_page.html', 
                           'http://www.washingtonpost.com/niraj-chokshi/2014/06/10/6b40abf2-f0cb-11e3-9ebc-2ee6f81ed217_page.html',
                           'http://www.washingtonpost.com/the-posts-view/2011/12/07/gIQAoEIscO_page.html',
@@ -192,7 +192,7 @@ washington_post_except = {'http://www.washingtonpost.com/ed-okeefe/2011/02/02/AB
                           'http://www.washingtonpost.com/dana-hedgpeth/2011/02/28/ABAxzsM_page.html',
                           'http://www.washingtonpost.com/dan-steinberg/2011/02/09/ABq4PTF_page.html',
                           }    
-         
+             
 washington_post_home_pages = {'http://www.washingtonpost.com/politics/' : 'politics',
                   'http://www.washingtonpost.com/opinions/' : 'opinions',
                   'http://www.washingtonpost.com/local/' : 'news',
@@ -206,12 +206,12 @@ washington_post_home_pages = {'http://www.washingtonpost.com/politics/' : 'polit
                   'http://www.washingtonpost.com/local/education/' : 'education',
                   'http://www.washingtonpost.com/' : None
                   }    
-         
-         
              
+             
+                 
 def extract_washington_post_article(article, is_on_homepage, predifined_category=None):
-             
-    if ( '201' not in article.url or article.url in washington_post_except 
+                 
+    if ( ('2015' not in article.url and '2016' not in article.url and '2017' not in article.url) or article.url in washington_post_except 
                 or article.url + '/' in washington_post_except or 'washingtonpost' not in article.url 
                 or 'capital-weather-gang' in article.url): 
         return
@@ -229,26 +229,28 @@ def extract_washington_post_article(article, is_on_homepage, predifined_category
         print("url is already existed")
         url_sharelikecomment_queue.put(normalized_url, True)
         return
-             
+                 
     article.category_id = None
     article.thumbnail_url = None
     article.short_description = None
     article.published_time = None
     article.title = None
-             
-              
+    article.source_id = None
+    article.id = None
+                 
+                  
     time_string = None
     title = None
     thumbnail_url = None
     short_description = None
     category_id = None
     date_time = None
-              
+                  
     article.download()
     html_tree = html.fromstring(article.html)
-             
-             
-             
+                 
+                 
+                 
     # get time
     try:
         time_string = html_tree.xpath('//span[@class="pb-timestamp"]/text()')[0]
@@ -256,7 +258,7 @@ def extract_washington_post_article(article, is_on_homepage, predifined_category
         #time_string = time_string + " UTC-0400"
     except BaseException as dateE:
         print("problem with time: {}".format(dateE))        
-             
+                 
     date_time = parse(time_string +  " -4:00")
     published_time = calendar.timegm(date_time.utctimetuple())
     print("time saved: ")
@@ -265,15 +267,15 @@ def extract_washington_post_article(article, is_on_homepage, predifined_category
     if (published_time > time.time()):
         published_time = None
     article.published_time = published_time
-             
-             
-             
+                 
+                 
+                 
     #get title
     try:
         title = html_tree.xpath('//meta[@property="og:title"]')[0].attrib['content']
     except Exception as e:
         print("Title not found")
-             
+                 
     try:
         if(title is None):
             title = html_tree.xpath('//title/text()')[0].split('|')[0]
@@ -281,9 +283,9 @@ def extract_washington_post_article(article, is_on_homepage, predifined_category
         print("Title not found {}".format(e))
     print(title)
     article.title = title
-             
-             
-             
+                 
+                 
+                 
     # get thumbnail
     try:
         thumbnail_url = html_tree.xpath('//meta[@name="twitter:image:src"]')[0].attrib['content']
@@ -303,9 +305,9 @@ def extract_washington_post_article(article, is_on_homepage, predifined_category
     except Exception as e:
         print('Thumbnaill not found again'.format(e))
     article.thumbnail_url = thumbnail_url
-              
+                  
+                     
                  
-             
     # get description
     try:
         short_description = html_tree.xpath('//meta[@name="description"]')[0].attrib['content']
@@ -319,11 +321,11 @@ def extract_washington_post_article(article, is_on_homepage, predifined_category
     except Exception as e:
         print('Description not found again'.format(e))
     article.short_description = short_description
-             
-             
-             
+                 
+                 
+                 
     # get category
-             
+                 
     try:
         category_id = html_tree.xpath('//meta[@name="section"]')[0].attrib['content']
         try:
@@ -337,51 +339,69 @@ def extract_washington_post_article(article, is_on_homepage, predifined_category
         print("extracted category: " + category_id)
     except Exception as e:
         print('Category not found'.format(e))
-                 
+                     
     if (category_id is not None and category_id in washington_post_category):
         article.category_id = washington_post_category.get(category_id)
-#     if (predifined_category =='tech'):
-#         article.category_id = 'tech'    
-#     if (predifined_category =='life'):
-#         article.category_id = 'life'
-#     if (predifined_category =='entertainment'):
-#         article.category_id = 'entertainment'
+    if (article.category_id is None and ('.washingtonpost.com/national/' in article.url or 
+                                         '.washingtonpost.com/local/' in article.url or 
+                                         'www.washingtonpost.com/news/' in article.url)):
+        article.category_id = 'news'
+    if (article.category_id is None and 'washingtonpost.com/politics/' in article.url):
+        article.category_id = 'politics'
+    if (article.category_id is None and 'washingtonpost.com/sports/' in article.url):
+        article.category_id = 'sport'
+    if (article.category_id is None and 'washingtonpost.com/world/' in article.url):
+        article.category_id = 'world'
+    if (article.category_id is None and 'washingtonpost.com/business/' in article.url):
+        article.category_id = 'business'
+    if (article.category_id is None and 'washingtonpost.com/opinions/' in article.url):
+        article.category_id = 'opinions'
+    if (article.category_id is None and 'washingtonpost.com/lifestyle/travel/' in article.url):
+        article.category_id = 'travel'
+    if (article.category_id is None and 'washingtonpost.com/lifestyle/food/' in article.url):
+        article.category_id = 'entertainment'
+    if (article.category_id is None and predifined_category is 'education'):
+        article.category_id = 'education'
+    if (article.category_id is None):
+        article.category_id = "others"
     print(article.category_id)
-             
-             
-             
-             
+        
+                 
+                 
+                 
     if (article.published_time is None or article.title is None or article.category_id is None):
         raise Exception("missing fields")
-             
-             
-             
-             
+                 
+                 
+                 
+    article.source_name = "WASHINGTONPOST.COM"           
     # get content
     article.parse()
     text = normalize_text(article.text)
     text_html = true_html.escape(get_text_html_saulify(normalized_url), True)
     normalized_title = normalize_text_nostop(article.title)
-    
+    article.source_id = washington_post_source_id
+        
     ''' insert this article to database, maybe send url to another thread to get count, share, .... or maket it asynchronous'''
     # when no exception, we insert to database
     try:
-        print(db_connect.insert_article3(normalized_url, article.title, washington_post_source_id, 
+        article.id = db_connect.insert_article3(normalized_url, article.title, washington_post_source_id, 
                                      article.category_id, False, is_on_homepage, article.published_time,
-                                     article.thumbnail_url, article.short_description, USA, text_html, text,normalized_title))
+                                     article.thumbnail_url, article.short_description, USA, text_html, text,normalized_title)
     except Exception as dbE:
         print("Error when insert article to db. {}".format(dbE))
+        return
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
     post_queue.put(article, True)
+                 
              
-         
-         
-         
-         
-         
-          
+             
+             
+             
+             
+              
 print('...................................................\n' +
       '...................................................\n' + 
       '...................................................\n' +
@@ -392,9 +412,9 @@ print('...................................................\n' +
 try:
     db_connect = IIIDatbaseConnection()
     db_connect.init_database_cont()     
-             
-             
-             
+                 
+                 
+                 
     ''' we process homepage'''
     for home_page in washington_post_home_pages:
         print("extracting: " + home_page)
@@ -404,30 +424,30 @@ try:
         for home_url in article_urls:
             if  home_url is not None and len(home_url) > 16: 
                 if ('http://' not in home_url and 'https://' not in home_url):
-                    home_url = NBC_HOMEPAGE + home_url
+                    home_url = WASHINGTON_POST + home_url
                 try:
                     article_home = Article(home_url)
                     extract_washington_post_article(article_home, True, washington_post_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage' + home_page +  'article:  {}'.format(e) + home_url)
-             
-             
-             
-             
-             
-             
-             
-             
-          
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+              
     db_connect.close_database_cont()   
 except Exception as e:        
     print('Something went wrong with database: {}'.format(e))    
+                 
+              
              
-          
-         
-         
-         
-         
+             
+             
+             
 '''
 =======================================================================================================================================
 =======================================================================================================================================
@@ -435,26 +455,26 @@ except Exception as e:
 =======================================================================================================================================
 =======================================================================================================================================
 ''' 
-         
-         
-            
-            
-            
-            
-            
-            
-            
-            
-            
-        
-        
-        
-        
-        
-        
-        
-        
-        
+             
+             
+                
+                
+                
+                
+                
+                
+                
+               
+               
+           
+           
+           
+           
+           
+           
+           
+           
+           
 '''
 =======================================================================================================================================
 =======================================================================================================================================
@@ -462,7 +482,7 @@ except Exception as e:
 =======================================================================================================================================
 =======================================================================================================================================
 ''' 
-        
+           
 abc_category = {'US' : 'news',
                 'U.S.' : 'news',
                 'International' : 'world',
@@ -475,10 +495,10 @@ abc_category = {'US' : 'news',
                 'Money' : 'business',
                 'Sports' : 'sport',
                 }
-         
-             
+            
+                
 abc_except = { }    
-         
+            
 abc_home_pages = {'http://abcnews.go.com/US/' : 'news',
                   'http://abcnews.go.com/International/' : 'world',
                   'http://abcnews.go.com/Politics/' : 'politics',
@@ -490,13 +510,13 @@ abc_home_pages = {'http://abcnews.go.com/US/' : 'news',
                   'http://abcnews.go.com/Sports/' : 'sport',
                   'http://abcnews.go.com/' : None,
                   }    
-             
-             
-             
-             
-             
+                
+                
+                
+                
+                
 def extract_abcnews_article(article, is_on_homepage, predifined_category=None):
-             
+                
     if (  article.url in abc_except or article.url + '/' in abc_except or 'abc' not in article.url): 
         return
     if (not hasNumbers(article.url)):
@@ -507,25 +527,33 @@ def extract_abcnews_article(article, is_on_homepage, predifined_category=None):
         print("url is already existed")
         url_sharelikecomment_queue.put(article.url, True)
         return
-            
-             
+      
+    normalize_url = article.url.split("#")[0].split("&")[0];
+    print("normalized url: " + normalize_url)
+    if (db_connect.is_url_existed(normalize_url) != -1):
+        print("url is already existed")
+        url_sharelikecomment_queue.put(normalize_url, True)
+        return         
+                
     article.category_id = None
     article.thumbnail_url = None
     article.short_description = None
     article.published_time = None
     article.title = None
-             
-              
+    article.source_id = None
+    article.id = None
+                
+                 
     time_string = None
     title = None
     thumbnail_url = None
     short_description = None
     category_id = None
-              
+                 
     article.download()
     html_tree = html.fromstring(article.html)
-              
-             
+                 
+                
     #time 
     try:
         time_string = html_tree.xpath('//meta[@itemprop="datepublished"]')[0].attrib['content']
@@ -549,14 +577,14 @@ def extract_abcnews_article(article, is_on_homepage, predifined_category=None):
     if (published_time > time.time()):
         published_time = None
     article.published_time = published_time
-             
-             
+                
+                
     #title
     try:
         title = html_tree.xpath('//meta[@property="og:title"]')[0].attrib['content']
     except Exception as e:
         print("")
-            
+               
     try:
         if(title is None):
             title = html_tree.xpath('//title/text()')[0].split('|')[0]
@@ -564,9 +592,9 @@ def extract_abcnews_article(article, is_on_homepage, predifined_category=None):
         print("Title not found {}".format(e))
     article.title = title
     print(title)
-             
-             
-             
+                
+                
+                
     # get thumbnail
     try:
         thumbnail_url = html_tree.xpath('//meta[@name="twitter:image:src"]')[0].attrib['content']
@@ -586,9 +614,9 @@ def extract_abcnews_article(article, is_on_homepage, predifined_category=None):
     except Exception as e:
         print('Thumbnaill not found again'.format(e))
     article.thumbnail_url = thumbnail_url
-                 
-                 
-             
+                    
+                    
+                
     # get description
     try:
         short_description = html_tree.xpath('//meta[@twitter:description"]')[0].attrib['content']
@@ -608,56 +636,58 @@ def extract_abcnews_article(article, is_on_homepage, predifined_category=None):
     except Exception as e:
         print('')
     article.short_description = short_description
-             
-             
+                
+                
     # get category
     try:
         category_id = html_tree.xpath('//a[@itemprop="articleSection"]/text()')[0]
     except Exception as e:
         print('Category not found'.format(e))
-                
+                   
     try:
         if category_id is None:
             result = re.search('abcnews\.go\.com/((?:[^/])*)/', article.url)
             category_id = result.group(1)
     except Exception as e:
         print('Category not found again'.format(e))
-                 
+                    
     if (category_id is not None and category_id in abc_category):
         article.category_id = abc_category.get(category_id)
     print(article.category_id)
-             
-             
+                
+                
     if (article.published_time is None or article.title is None or article.category_id is None):
         raise Exception("missing fields")
-             
-             
-             
-             
+                
+                
+                
+    article.source_name = "ABC NEWS"           
     # get content
     article.parse()
     text = normalize_text(article.text)
     text_html = true_html.escape(get_text_html_saulify(article.url), True)
     normalized_title = normalize_text_nostop(article.title)
+    article.source_id = abc_source_id
+     
     ''' insert this article to database, maybe send url to another thread to get count, share, .... or maket it asynchronous'''
     # when no exception, we insert to database
     try:
-        print(db_connect.insert_article3(article.url, article.title, abc_source_id, 
+        article.id = db_connect.insert_article3(normalize_url, article.title, abc_source_id, 
                                      article.category_id, False, is_on_homepage, article.published_time,
-                                     article.thumbnail_url, article.short_description, USA, text_html, text,normalized_title))
+                                     article.thumbnail_url, article.short_description, USA, text_html, text,normalized_title)
     except Exception as dbE:
         print("Error when insert article to db. {}".format(dbE))
     # after insert to database, we put this url to get share, comment, like
-    url_sharelikecomment_queue.put(article.url, True)
-    article.url = article.url
+    url_sharelikecomment_queue.put(normalize_url, True)
+    article.url = normalize_url
     post_queue.put(article, True)
-         
-         
-        
-        
-        
-        
-        
+            
+            
+           
+           
+           
+           
+           
 print('...................................................\n' +
       '...................................................\n' + 
       '...................................................\n' +
@@ -668,9 +698,9 @@ print('...................................................\n' +
 try:
     db_connect = IIIDatbaseConnection()
     db_connect.init_database_cont()     
-            
-            
-            
+               
+               
+               
     ''' we process homepage'''
     for home_page in abc_home_pages:
         print("extracting: " + home_page)
@@ -686,38 +716,27 @@ try:
                     extract_abcnews_article(article_home, True, abc_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage ' + home_page +  ' article:  {}'.format(e) + home_url)
+               
+               
+               
+               
+               
+               
+               
+               
             
-            
-            
-            
-            
-            
-            
-            
-         
     db_connect.close_database_cont()   
 except Exception as e:        
     print('Something went wrong with database: {}'.format(e))    
+               
             
-         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+           
+           
+           
+               
+           
+           
+           
 '''
 =======================================================================================================================================
 =======================================================================================================================================
@@ -725,20 +744,25 @@ except Exception as e:
 =======================================================================================================================================
 =======================================================================================================================================
 ''' 
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
+          
+         
+         
+         
+         
+         
+         
+         
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
       
       
 '''
@@ -767,6 +791,8 @@ latimes_category = {'LOCAL' : 'news',
                 'Books' : 'life',
                 'Travel' : 'travel',
                 'Sports' : 'sport',
+                'BUSINESS': 'business',
+                'Science' : 'science'
                 }
        
            
@@ -822,6 +848,8 @@ def extract_latimes_article(article, is_on_homepage, predifined_category=None):
     article.short_description = None
     article.published_time = None
     article.title = None
+    article.source_id = None
+    article.id = None
            
             
     time_string = None
@@ -907,7 +935,7 @@ def extract_latimes_article(article, is_on_homepage, predifined_category=None):
     # get category
     try:
         if category_id is None:
-            category_id = html_tree.xpath('//div[@class="trb_allContentWrapper " ]')[0].attrib['data-content-section']
+            category_id = html_tree.xpath('//div[@class="trb_allContentWrapper" ]')[0].attrib['data-content-section']
     except Exception as e:
         print('Category not found again'.format(e))
     try:
@@ -926,19 +954,20 @@ def extract_latimes_article(article, is_on_homepage, predifined_category=None):
            
            
            
-           
+    article.source_name = "Los Angeles Times"        
     # get content
     article.parse()
     text = normalize_text(article.text)
     text_html = true_html.escape(get_text_html_saulify(normalized_url), True)
     normalized_title = normalize_text_nostop(article.title)
+    article.source_id = latimes_source_id
     
     ''' insert this article to database, maybe send url to another thread to get count, share, .... or maket it asynchronous'''
     # when no exception, we insert to database
     try:
-        print(db_connect.insert_article3(normalized_url, article.title, latimes_source_id, 
+        article.id = db_connect.insert_article3(normalized_url, article.title, latimes_source_id, 
                                      article.category_id, False, is_on_homepage, article.published_time,
-                                     article.thumbnail_url, article.short_description, USA, text_html, text,normalized_title))
+                                     article.thumbnail_url, article.short_description, USA, text_html, text,normalized_title)
     except Exception as dbE:
         print("Error when insert article to db. {}".format(dbE))
     # after insert to database, we put this url to get share, comment, like
@@ -972,7 +1001,7 @@ try:
         html_tree = html.fromstring(la_page.text)
         article_urls = html_tree.xpath('//a/@href')
         for home_url in article_urls:
-            if  home_url is not None and len(home_url) > 16: 
+            if  home_url is not None and len(home_url) > 46: 
                 if ('http://' not in home_url and 'https://' not in home_url):
                     home_url = LA_TIMES_HOMEPAGE + home_url
                 try:

@@ -23,7 +23,7 @@ FB_REST_API = 'http://api.facebook.com/restserver.php'
 TWITTER_URL_API = 'http://urls.api.twitter.com/1/urls/count.json'
 POISON = "quite_queue"
 UPDATE_COUNT_PERIOD = 5*60;
-DELETE_PERIOD = 14 * 24 * 60 * 60
+DELETE_PERIOD = 4 * 24 * 60 * 60
 '''=========================================================================
 Thread waiting to get comment like and share for url, then save result in db
 ==========================================================================='''
@@ -40,56 +40,87 @@ class StatisticGetterThread(Thread):
     def run(self):
         
         try:
-            db_thread = IIIDatbaseConnection()
-            db_thread.init_database_cont()
             ''' get list of existing url from db here'''
             running_time = 0
             while self.is_running:
-                running_time = running_time + 1
-                print("======================= Running time" + str(running_time) + "   ==============================")
-                cur = db_thread.cursor()
-                cur.execute("SELECT id, url, updated_time FROM articles WHERE is_duplicated = 0 AND UNIX_TIMESTAMP() - last_update_statistic > " + str(40 * 60))
-                #print(len(cur.fetchall()))
-                for r in cur.fetchall():
-                    if (self.is_running):
+                try:
+                    
+                    running_time = running_time + 1
+                    print("======================= Running time" + str(running_time) + "   ==============================")
+                    all_urls = {}
+                    try:
+                        load_db_cont = IIIDatbaseConnection()
+                        load_db_cont.init_database_cont()
+                        cur = load_db_cont.cursor()
+                        cur.execute("SELECT id, url, updated_time FROM articles WHERE is_duplicated = 0 AND UNIX_TIMESTAMP() - last_update_statistic > " + str(40 * 60))
+                        all_urls = cur.fetchall()
+                    except Exception as e:
+                        print("Cannot read database {}".format(e))
+                    finally:
                         try:
-                            next_url = r[1]
-                            try:
-                                if (int(time.time()) - int(r[2]) > DELETE_PERIOD):
-                                    db_thread.delete_article(r[0])
-                            except Exception as e:
-                                print("Error when delete old articles: {}".format(e))    
-                            fb_param = dict(method = 'links.getStats',
-                                        urls = urllib.parse.quote(next_url, safe=''),
-                                        format = 'json')
-                            tw_param = dict(url=next_url)
-                            fb_resp = requests.get(url=FB_REST_API, params = fb_param)
-                            print(fb_resp.text)
-                            data = json.loads(fb_resp.text)[0]
-                            # from twitter
-                            tw_resp = None
-                            tw_share = 0
-                            try:
-                                tw_resp = requests.get(url=TWITTER_URL_API, params = tw_param)
-                            except Exception as db_e:
-                                print("Error when get Twitter {}".format(db_e))
-                            if(tw_resp is not None):
-                                twi_data = json.loads(tw_resp.text)
-                                tw_share = twi_data['count']
-                            #print(data)
-                            #print(twi_data)
-                            print(db_thread.update_article_count(next_url, data['comment_count'],
-                                                                 data['share_count'], data['like_count'], data['comments_fbid'], tw_share))
+                            cur.close()
+                            load_db_cont.close_database_cont()
                         except Exception as e:
-                            print("Error when get FB, TW like comment: {}".format(e))
-                cur.close()
+                            pass
+                        
+                    print(len(all_urls))
+                    for r in all_urls:
+                        if (self.is_running):
+                            try:
+                                next_url = r[1]
+                                if (int(time.time()) - int(r[2]) > DELETE_PERIOD):
+                                    try:
+                                        delelte_cont = IIIDatbaseConnection()
+                                        delelte_cont.init_database_cont()
+                                        delelte_cont.delete_article(r[0])
+                                    except Exception as e:
+                                        print("Error when delete old articles: {}".format(e))   
+                                    finally:
+                                        try:
+                                            delelte_cont.close_database_cont()
+                                        except Exception as e:
+                                            pass
+                                    continue
+                                fb_param = dict(method = 'links.getStats',
+                                            urls = urllib.parse.quote(next_url, safe=''),
+                                            format = 'json')
+                                tw_param = dict(url=next_url)
+                                fb_resp = requests.get(url=FB_REST_API, params = fb_param)
+                                print(fb_resp.text)
+                                data = json.loads(fb_resp.text)[0]
+                                # from twitter
+                                tw_resp = None
+                                tw_share = 0
+                                try:
+                                    tw_resp = requests.get(url=TWITTER_URL_API, params = tw_param)
+                                except Exception as db_e:
+                                    print("Error when get Twitter {}".format(db_e))
+                                if(tw_resp is not None):
+                                    twi_data = json.loads(tw_resp.text)
+                                    tw_share = twi_data['count']
+                                #print(data)
+                                #print(twi_data)
+                                try:
+                                    save_cont = IIIDatbaseConnection()
+                                    save_cont.init_database_cont()
+                                    print(save_cont.update_article_count(next_url, data['comment_count'],
+                                                                     data['share_count'], data['like_count'], data['comments_fbid'], tw_share))
+                                except Exception as e:
+                                    print("Error when update count for article: {}".format(e))   
+                                finally:
+                                    try:
+                                        save_cont.close_database_cont()
+                                    except Exception as e:
+                                        pass
+                            except Exception as e:
+                                print("Error when get FB, TW like comment: {}".format(e))
+                    all_urls = None
+                except Exception as db_e:
+                    print("Error database thread get like_share count: {}".format(db_e))
+                print("finsihed one round, now take sleep")
                 time.sleep(UPDATE_COUNT_PERIOD)
         except Exception as db_e:
             print("Error database thread get like_share count: {}".format(db_e))
-        finally:
-            #close connection db before exit
-            if (db_thread is not None):
-                db_thread.close_database_cont()
 '''    
 =========================== end of get like, share thread =====================
 '''
@@ -115,29 +146,47 @@ IIIN_SERVER_SERCRET = '52c5ce6ee56af4221c6215f3fc1418d4'
 #             '778046915618571'
 #             ]
 
-sources_page_id = ['5550296508', '18793419640',
+sources_page_id = [
+                    '5550296508', '18793419640',
+                   '7873709245', '219367258105115', 
+                   '6651543066', 
+                   '86680728811', '163497464933', #abc
                    '13652355666', '18468761129',
                    '155869377766434', '114288853688',
-                   '89686424098', '86680728811',
+                   '89686424098', '124213184321534', # bloomberg view
                    '5863113009', '123551651184',
                    '100679109890', '184963273336',
                    '123131338119', '113371309369',
-                   '5281959998', '6250307292',
+                    '6250307292',
                    '33735392231', '374111579728',
+                   '315575098522880','123551651184',  # la entertainment 
                    '15225899564', '96028256183',
                    '131459315949', '13539254023',
                    '266790296879', '1481073582140028',
-                   '154758931259107', '15704546335',
+                   '154758931259107', 
                    '10674237167', '146289548765543',
                    '168744703121', '47689998796',
-                   '104266592953439', '21898300328',
+                   '104266592953439', 
                    '328451927331630', '1318800798260799',
                    '491452930867938', '30911162508', 
                    '269299195015', '95926963131',
                    '42933792278', '42933792278',
                    '274832347617', '89033370735',
-                   '8062627951', '7331091005'
-                   
+                   '8062627951', '7331091005',
+                   '18807449704', '500945955060', # mashable
+                   '20446254070', '516821321748618', # business insider
+                   '116548701336', '119737589217', # uproxx
+                   '140738092630206', # the blaze
+                   '367116489976035', # I freaking love sricen
+                   '112638779551','81286652945', # fox sport
+                   '5281959998', 
+                   '105307012882667', '176999952314969',# newyork time science
+                   '5518834980', '314077407675', # newyork times entertain
+                   '15704546335',
+                   '21898300328', 
+                   '114050161948682', '208994395842496', # reuters 
+                   '268914272540', #newyork daily news
+                   '97212224368', #cnbc
                    ]
 pages_toke = {}  
 TOKEN_TIMEOUT = 40 * 24 * 60 * 60
@@ -188,7 +237,6 @@ class GetFacebookPostForUrl(Thread):
         print("thread post article to page already started")
         try:
             db_thread = IIIDatbaseConnection()
-            db_thread.init_database_cont()
             #get statistic on FB, TW
             
             while self.is_running:
@@ -215,21 +263,26 @@ class GetFacebookPostForUrl(Thread):
                                     string_post_content = string_post_content + post['message']
                                     print(post['message'])
                                 if (string_post_content is not None):
-                                    print("post content: " + string_post_content)
+                                    #print("post content: " + string_post_content)
                                     urls = re.findall(r'(https?://\S+)', string_post_content)
                             
                                 if (urls is None or len(urls) <= 0):
                                     print("not found url")
                                 else: # save id to database
                                     for url in urls:
-                                        url = utils.normalize_url(url)
-                                        print("postId: " + post['id'] + " : " + url)
-                                        print(db_thread.update_article_fbid(url, post['id']))
+                                        try:
+                                            db_thread.init_database_cont()
+                                            url = utils.normalize_url(url)
+                                            print("postId: " + post['id'] + " : " + url)
+                                            print(db_thread.update_article_fbid(url, post['id']))
+                                            db_thread.close_database_cont() 
+                                        except Exception as e:
+                                            print("Error when save facebook post id to db: {}".format(e))
                             except Exception as e:
                                 print("Error when get url from facebook post: {}".format(e))   
                 except Exception as e:
                     print("Error when get url from facebook post: {}".format(e))
-                time.sleep(10* UPDATE_COUNT_PERIOD)
+                time.sleep(2* UPDATE_COUNT_PERIOD)
         except Exception as db_e:
             print("Error database thread post to Facebook: {}".format(db_e))
         finally:
@@ -242,7 +295,7 @@ class GetFacebookPostForUrl(Thread):
     
     
     
-#     
+# #     
 get_official_posts_thread = GetFacebookPostForUrl()
 get_official_posts_thread.start()
 

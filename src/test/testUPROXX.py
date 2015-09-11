@@ -1,9 +1,13 @@
 '''
-Created on Mar 5, 2015
+Created on Apr 10, 2015
 
 @author: hoavu
 '''
-from apt.progress.text import long
+'''
+Created on Mar 10, 2015
+
+@author: hoavu
+'''
 import calendar
 from datetime import datetime
 from dateutil.parser import parse
@@ -12,49 +16,31 @@ from lxml import html
 import newspaper
 from newspaper.article import Article
 from pytz import timezone
+import pytz
 import queue
 import re
 import requests
 import time
 
 
-normalized_url = 'http://www.buzzfeed.com/rossalynwarren/a-5-year-old-girl-describes-what-life-is-like-in-nepal-after#.wo8E3nEpz'
+normalized_url = 'http://uproxx.com/tv/2015/04/game-of-thrones-showrunners-david-benioff-d-b-weiss-break-down-the-mountain-vs-viper-fight-for-us/'
 thumbnail_url = None
 short_description = None
+time_string = None
 category_id = None
 title = None
-time_string=None
 article_page = requests.get(normalized_url)
 #html_tree = html.fromstring(article.html)
 html_tree = html.fromstring(article_page.text)
 
-
-# article_home = Article(normalized_url)
-# article_home.download()
-# article_home.parse()
-# print(article_home.publish_date)
-#print(article_page.text)
-
 try:
-    time_span_tag = html_tree.xpath('//span[@class="buzz_datetime converted_buzz_datetime"]')[0]
-    time_script_tag= time_span_tag.xpath('//script[@type="text/javascript"]')[0]
-    result_regex = re.search(r"formatted_date\(([A-Za-z0-9_\./\\-]*)\);", time_span_tag.text_content())
-    time_string = result_regex.group(1)
-    print("extracted_time: " + time_string)
-    #time_string = time_string + " UTC-0400"
+    parse_page_obj = html_tree.xpath('//meta[@name="parsely-page"]')[0].attrib['content']
+    parse_page_json = json.loads(parse_page_obj)
+    print(parse_page_json['title'])
+    print(parse_page_obj)
 except BaseException as dateE:
-    print("problem with time: {}".format(dateE))
-try:
-    if (time_string is None):
-        time_span_tag = html_tree.xpath('//span[@class="buzz-datetime converted_buzz_datetime"]')[0]
-        time_script_tag= time_span_tag.xpath('//script[@type="text/javascript"]')[0]
-        result_regex = re.search(r"formatted_date\(([A-Za-z0-9_\./\\-]*)\);", time_span_tag.text_content())
-        time_string = result_regex.group(1)
-        print("extracted_time: " + time_string)
-        #time_string = time_string + " UTC-0400"
-except BaseException as dateE:
-    print("problem with time: {}".format(dateE))
-print(long(time_string))
+    print("problem with parse page: {}".format(dateE))   
+    
 
 
 try:
@@ -77,11 +63,10 @@ except Exception as e:
     print('Thumbnaill not found.'.format(e))
 try:
     if(thumbnail_url is None):
-        thumbnail_url = html_tree.xpath('//link[@rel="image_src"]')[0].attrib['href']
+        thumbnail_url = html_tree.xpath('//meta[@name="IMAGE_PATH_FULL"]')[0].attrib['content']
         print(thumbnail_url)
 except Exception as e:
     print('Thumbnaill not found again'.format(e))
-
     
     
 
@@ -101,15 +86,10 @@ except Exception as e:
 
 
 # get category
+
 try:
     category_id = html_tree.xpath('//meta[@property="article:section"]')[0].attrib['content']
 except Exception as e:
     print('Category not found'.format(e))
-    
-try:
-    if category_id is None:
-        category_id = html_tree.xpath('//meta[@name="category"]')[0].attrib['content']
-except Exception as e:
-    print('Category not found again'.format(e))
     
 print(category_id)

@@ -1,9 +1,8 @@
 '''
-Created on Mar 5, 2015
+Created on Mar 10, 2015
 
 @author: hoavu
 '''
-from apt.progress.text import long
 import calendar
 from datetime import datetime
 from dateutil.parser import parse
@@ -12,49 +11,47 @@ from lxml import html
 import newspaper
 from newspaper.article import Article
 from pytz import timezone
+import pytz
 import queue
 import re
 import requests
 import time
 
 
-normalized_url = 'http://www.buzzfeed.com/rossalynwarren/a-5-year-old-girl-describes-what-life-is-like-in-nepal-after#.wo8E3nEpz'
+normalized_url = 'http://mashable.com/2015/04/22/google-doodle-earth-day-quiz/'
 thumbnail_url = None
 short_description = None
+time_string = None
 category_id = None
 title = None
-time_string=None
 article_page = requests.get(normalized_url)
 #html_tree = html.fromstring(article.html)
 html_tree = html.fromstring(article_page.text)
 
 
-# article_home = Article(normalized_url)
-# article_home.download()
-# article_home.parse()
-# print(article_home.publish_date)
-#print(article_page.text)
-
 try:
-    time_span_tag = html_tree.xpath('//span[@class="buzz_datetime converted_buzz_datetime"]')[0]
-    time_script_tag= time_span_tag.xpath('//script[@type="text/javascript"]')[0]
-    result_regex = re.search(r"formatted_date\(([A-Za-z0-9_\./\\-]*)\);", time_span_tag.text_content())
-    time_string = result_regex.group(1)
-    print("extracted_time: " + time_string)
-    #time_string = time_string + " UTC-0400"
+    time_string = html_tree.xpath('//meta[@property="og:article:published_time"]')[0].attrib['content']
+    print("extracted time: " + time_string)
 except BaseException as dateE:
     print("problem with time: {}".format(dateE))
+    
 try:
     if (time_string is None):
-        time_span_tag = html_tree.xpath('//span[@class="buzz-datetime converted_buzz_datetime"]')[0]
-        time_script_tag= time_span_tag.xpath('//script[@type="text/javascript"]')[0]
-        result_regex = re.search(r"formatted_date\(([A-Za-z0-9_\./\\-]*)\);", time_span_tag.text_content())
-        time_string = result_regex.group(1)
-        print("extracted_time: " + time_string)
+        time_string = html_tree.xpath('//div[@class="dateline"]/text()')[1]
+        if (time_string is not None):
+            time_string = time_string.replace ("Published at ", "")
+            time_string = time_string.replace ("on ", "")
+        print("extracted time: " + time_string)
         #time_string = time_string + " UTC-0400"
 except BaseException as dateE:
     print("problem with time: {}".format(dateE))
-print(long(time_string))
+    
+
+date_time = parse(time_string +  " -7:00")
+published_time = calendar.timegm(date_time.utctimetuple())
+print("time saved: ")
+print(datetime.fromtimestamp(published_time))
+print(published_time)
 
 
 try:
@@ -71,13 +68,19 @@ print(title)
 
 # get thumbnail
 try:
-    thumbnail_url = html_tree.xpath('//meta[@property="og:image"]')[0].attrib['content']
+    thumbnail_url = html_tree.xpath('//meta[@name="twitter:image"]')[0].attrib['content']
     print(thumbnail_url)
 except Exception as e:
     print('Thumbnaill not found.'.format(e))
 try:
     if(thumbnail_url is None):
-        thumbnail_url = html_tree.xpath('//link[@rel="image_src"]')[0].attrib['href']
+        thumbnail_url = html_tree.xpath('//meta[@name="sailthru.secondary_image"]')[0].attrib['content']
+        print(thumbnail_url)
+except Exception as e:
+    print('Thumbnaill not found again'.format(e))
+try:
+    if(thumbnail_url is None):
+        thumbnail_url = html_tree.xpath('//meta[@name="sailthru.lead_image"]')[0].attrib['content']
         print(thumbnail_url)
 except Exception as e:
     print('Thumbnaill not found again'.format(e))
@@ -102,14 +105,11 @@ except Exception as e:
 
 # get category
 try:
-    category_id = html_tree.xpath('//meta[@property="article:section"]')[0].attrib['content']
+    data_json = html_tree.xpath('//script[@type="application/ld+json"]')[0]
+    print(data_json.text)
+    data_json = json.loads(data_json.text)
+    print(data_json['articleSection'])
 except Exception as e:
-    print('Category not found'.format(e))
-    
-try:
-    if category_id is None:
-        category_id = html_tree.xpath('//meta[@name="category"]')[0].attrib['content']
-except Exception as e:
-    print('Category not found again'.format(e))
+    print('Category not found {}'.format(e))
     
 print(category_id)

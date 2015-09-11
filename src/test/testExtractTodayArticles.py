@@ -16,7 +16,7 @@ import queue
 import json
 import re
 
-normalized_url = 'http://ftw.usatoday.com/2015/03/chip-kelly-good-coach-free-agency-demarco-murray'
+normalized_url = 'http://www.usatoday.com/story/sports/mlb/2015/04/22/barry-bonds-obstruction-conviction-overturned-hall-of-fame/26215105/'
 thumbnail_url = None
 short_description = None
 category_id = None
@@ -57,16 +57,12 @@ print(title)
 
 # get thumbnail
 try:
-    thumbnail_url = html_tree.xpath('//meta[@itemprop="thumbnailUrl"]')[0].attrib['content']
+    thumbnail_url = html_tree.xpath('//meta[@itemprop="image"]')[0].attrib['content']
     print(thumbnail_url)
 except Exception as e:
     print('Thumbnaill not found.'.format(e))
-try:
-    if(thumbnail_url is None):
-        thumbnail_url = html_tree.xpath('//meta[@itemprop="image"]')[0].attrib['content']
-        print(thumbnail_url)
-except Exception as e:
-    print('Thumbnaill not found again'.format(e))
+    
+    
 try:
     if(thumbnail_url is None):
         thumbnail_url = html_tree.xpath('//meta[@name="twitter:image:src"]')[0].attrib['content']
@@ -79,8 +75,13 @@ try:
         print(thumbnail_url)
 except Exception as e:
     print('Thumbnaill not found again'.format(e))    
-    
 
+try:
+    if('files.wordpress.com' in thumbnail_url):
+        thumbnail_url = thumbnail_url.replace("?w=640","?w=400")
+except Exception as e:
+    print('resize thumbnail error'.format(e))   
+print(thumbnail_url)
 # get description
 try:
     short_description = html_tree.xpath('//meta[@itemprop="description"]')[0].attrib['content']
