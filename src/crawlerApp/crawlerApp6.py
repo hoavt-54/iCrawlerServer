@@ -357,7 +357,7 @@ def extract_cnbcnews_article(article, is_on_homepage, predifined_category=None):
     # get content
     article.parse()
     text = normalize_text(article.text)
-    text_html = true_html.escape(get_text_html_saulify(normalized_url), True)
+    text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
     article.source_id = cnbc_source_id
             
@@ -416,7 +416,7 @@ try:
                 if ('http://' not in home_url and 'https://' not in home_url):
                         home_url = CNBC_HOME + home_url
                 try:
-                    article_home = Article(home_url)
+                    article_home = Article(home_url, keep_article_html=True)
                     extract_cnbcnews_article(article_home, True, cnbc_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage' + home_page +  'article:  {}'.format(e) + home_url)

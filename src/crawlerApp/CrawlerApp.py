@@ -245,8 +245,8 @@ def extract_cnn_article (article, is_on_homepage, predifined_category=None):
     print(article.category_id)
     
     ''' get clean text content '''
-    text_html = true_html.escape(get_text_html_saulify(normalized_url), True)
     article.parse()
+    text_html = true_html.escape(article.article_html, True)
     text = normalize_text(article.text)
     normalized_title = normalize_text_nostop(article.title)
     article.source_id = cnn_source_id
@@ -311,7 +311,7 @@ try:
                         home_url = CNN_HOMPAGE_ROOT + home_url
                          
                 try:
-                    article_home = Article(home_url)
+                    article_home = Article(home_url, keep_article_html=True)
                     extract_cnn_article(article_home, True, cnn_homepages.get(cnn_home))
                 except Exception as e:
                     print('Smt wrong when process homepage sport  article:  {}'.format(e) + home_url)
@@ -530,9 +530,8 @@ def extract_usatoday_article(article, is_on_homepage, predifined_category=None):
                       
     if (article.published_time is None or article.title is None or article.category_id is None):
         raise Exception("")
-                   
-    text_html = true_html.escape(get_text_html_saulify(normalized_url), True)
-    article.parse()
+    article.parse()               
+    text_html = true_html.escape(article.article_html, True)
     text = normalize_text(article.text)
     normalized_title = normalize_text_nostop(article.title)
     article.source_id = usatoday_source_id
@@ -584,7 +583,7 @@ try:
             if ('http://' not in home_url and 'https://' not in home_url):
                 home_url = USATODAY_HOME_ROOT + home_url
             try:
-                article_home = Article(home_url)
+                article_home = Article(home_url, keep_article_html=True)
                 extract_usatoday_article(article_home, True, usatoday_category.get('sports'))
             except Exception as e:
                 print('Smt wrong when process homepage sport  article:  {}'.format(e) + home_url)
@@ -602,7 +601,7 @@ try:
             if ('http://' not in home_url and 'https://' not in home_url):
                 home_url = USATODAY_HOME_ROOT + home_url
             try:
-                article_home = Article(home_url)
+                article_home = Article(home_url, keep_article_html=True)
                 extract_usatoday_article(article_home, True, usatoday_category.get('life'))
             except Exception as e:
                 print('Smt wrong when process homepage life  article:  {}'.format(e) + home_url)
@@ -621,7 +620,7 @@ try:
             if ('http://' not in home_url and 'https://' not in home_url):
                 home_url = USATODAY_HOME_ROOT + home_url
             try:
-                article_home = Article(home_url)
+                article_home = Article(home_url, keep_article_html=True)
                 extract_usatoday_article(article_home, True, usatoday_category.get('money'))
             except Exception as e:
                 print('Smt wrong when process homepage money  article:  {}'.format(e) + home_url)
@@ -642,7 +641,7 @@ try:
             if ('http://' not in home_url and 'https://' not in home_url):
                 home_url = USATODAY_HOME_ROOT + home_url
             try:
-                article_home = Article(home_url)
+                article_home = Article(home_url, keep_article_html=True)
                 extract_usatoday_article(article_home, True, usatoday_category.get('tech'))
             except Exception as e:
                 print('Smt wrong when process homepage tech  article:  {}'.format(e) + home_url)
@@ -661,7 +660,7 @@ try:
             if ('http://' not in home_url and 'https://' not in home_url):
                 home_url = USATODAY_HOME_ROOT + home_url
             try:
-                article_home = Article(home_url)
+                article_home = Article(home_url, keep_article_html=True)
                 extract_usatoday_article(article_home, True, usatoday_category.get('travel'))
             except Exception as e:
                 print('Smt wrong when process homepage travel  article:  {}'.format(e) + home_url)
@@ -682,7 +681,7 @@ try:
             if ('http://' not in home_url and 'https://' not in home_url):
                 home_url = USATODAY_HOME_ROOT + home_url
             try:
-                article_home = Article(home_url)
+                article_home = Article(home_url, keep_article_html=True)
                 extract_usatoday_article(article_home, True, usatoday_category.get('opinion'))
             except Exception as e:
                 print('Smt wrong when process homepage opinion  article:  {}'.format(e) + home_url)
@@ -703,7 +702,7 @@ try:
         if ('http://' not in home_url and 'https://' not in home_url):
             home_url = USATODAY_HOME_ROOT + home_url
         try:
-            article_home = Article(home_url)
+            article_home = Article(home_url, keep_article_html=True)
             extract_usatoday_article(article_home, True)
         except Exception as e:
             print('Smt wrong when process homepage article:  {}'.format(e) + home_url)
@@ -919,7 +918,7 @@ def extract_people_article(article, is_on_homepage, predifined_category=None):
     # get content
     article.parse()
     text = normalize_text(article.text)
-    text_html = true_html.escape(get_text_html_saulify(normalized_url), True)
+    text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
     article.source_id = people_source_id
      
@@ -966,7 +965,7 @@ try:
                 if ('http://' not in home_url and 'https://' not in home_url):
                     home_url = PEOPLE_HOME + home_url
                 try:
-                    article_home = Article(home_url)
+                    article_home = Article(home_url, keep_article_html=True)
                     extract_people_article(article_home, True, None)
                 except Exception as e:
                     print('Smt wrong when process homepage ' + home_page +  ' article:  {}'.format(e) + home_url)
@@ -1261,7 +1260,7 @@ def extract_forbes_article(article, is_on_homepage, predifined_category=None):
     # get content
     article.parse()
     text = normalize_text(article.text)
-    text_html = true_html.escape(get_text_html_saulify(normalized_url), True)
+    text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
     article.source_id =forbes_source_id
      
@@ -1308,7 +1307,7 @@ try:
                 if ('http://' not in home_url and 'https://' not in home_url):
                     home_url = FORBES_HOME + home_url
                 try:
-                    article_home = Article(home_url)
+                    article_home = Article(home_url, keep_article_html=True)
                     extract_forbes_article(article_home, True, forbes_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage ' + home_page +  ' article:  {}'.format(e) + home_url)
@@ -1441,7 +1440,7 @@ def extract_uproxx_article(article, is_on_homepage, predifined_category=None):
     # get content
     article.parse()
     text = normalize_text(article.text)
-    text_html = true_html.escape(get_text_html_saulify(normalized_url), True)
+    text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
     article.source_id = uproxx_source_id
      
@@ -1486,7 +1485,7 @@ try:
             if ('http://' not in home_url and 'https://' not in home_url):
                 home_url = UPROXX_HOME + home_url
             try:
-                article_home = Article(home_url)
+                article_home = Article(home_url, keep_article_html=True)
                 extract_uproxx_article(article_home, True, None)
             except Exception as e:
                 print('Smt wrong when process homepage UPROXX article:  {}'.format(e) + home_url)
@@ -1679,7 +1678,7 @@ def extract_iflscience_article(article, is_on_homepage, predifined_category=None
     # get content
     article.parse()
     text = normalize_text(article.text)
-    text_html = true_html.escape(get_text_html_saulify(normalized_url), True)
+    text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
     article.source_id = iflovescience_id
              
@@ -1738,7 +1737,7 @@ try:
                 if ('http://' not in home_url and 'https://' not in home_url):
                     home_url = IFLove_SCIENC_HOME + home_url
                 try:
-                    article_home = Article(home_url)
+                    article_home = Article(home_url, keep_article_html=True)
                     extract_iflscience_article(article_home, True, IfloveScience_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage' + home_page +  'article:  {}'.format(e) + home_url)
@@ -1988,7 +1987,7 @@ def extract_newyorkdaily_article(article, is_on_homepage, predifined_category=No
     # get content
     article.parse()
     text = normalize_text(article.text)
-    text_html = true_html.escape(get_text_html_saulify(article.url), True)
+    text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
     article.source_id = nydaily_news_id
      
@@ -2035,7 +2034,7 @@ try:
                 if ('http://' not in home_url and 'https://' not in home_url):
                     home_url = NY_DAILY_NEWS_HOME + home_url
                 try:
-                    article_home = Article(home_url)
+                    article_home = Article(home_url, keep_article_html=True)
                     extract_newyorkdaily_article(article_home, True, newyorkdaily_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage ' + home_page +  ' article:  {}'.format(e) + home_url)

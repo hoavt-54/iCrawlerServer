@@ -329,7 +329,7 @@ def extract_bloomberg_article(article, is_on_homepage, predifined_category=None)
     article.parse()
     text = normalize_text(article.text)
     try:
-        text_html = true_html.escape(get_text_html_saulify(article.url), True)
+        text_html = true_html.escape(article.article_html, True)
     except Exception as ee:
         print("cannot get simplified text from saulify")
     normalized_title = normalize_text_nostop(article.title)    
@@ -381,7 +381,7 @@ try:
                     else:
                         home_url = home_page + home_url
                 try:
-                    article_home = Article(home_url)
+                    article_home = Article(home_url, keep_article_html=True)
                     extract_bloomberg_article(article_home, True, bloomberg_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage ' + home_page +  ' article:  {}'.format(e) + home_url)
@@ -666,7 +666,7 @@ try:
                 if ('http://' not in home_url and 'https://' not in home_url and 'www.foxnews' not in home_url):
                     home_url = FOX_NEWS_HOME + home_url
                 try:
-                    article_home = Article(home_url)
+                    article_home = Article(home_url, keep_article_html=True)
                     extract_foxnews_article(article_home, True, foxnews_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage ' + home_page +  ' article:  {}'.format(e) + home_url)
@@ -873,7 +873,7 @@ def extract_espn_article(article, is_on_homepage, predifined_category=None):
     # get content
     article.parse()
     text = normalize_text(article.text)
-    text_html = true_html.escape(get_text_html_saulify(normalized_url), True)
+    text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
     article.source_id = espn_source_id
     
@@ -920,7 +920,7 @@ try:
                 if ('http://' not in home_url and 'https://' not in home_url and 'espn.go' not in home_url):
                     home_url = ESPN_HOME + home_url
                 try:
-                    article_home = Article(home_url)
+                    article_home = Article(home_url, keep_article_html=True)
                     extract_espn_article(article_home, True, espn_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage ' + home_page +  ' article:  {}'.format(e) + home_url)
@@ -1171,9 +1171,9 @@ def extract_buzzfeed_article(article, is_on_homepage, predifined_category=None):
     # get content
     article.parse()
     text = normalize_text(article.text)
-    extractor = buzzFeedContentExtractor()
-    extractor.parse(html.fromstring(article.html), title, unix_time_to_string(article.published_time), normalized_url)
-    text_html = true_html.escape(extractor.to_html())
+    #extractor = buzzFeedContentExtractor()
+    #extractor.parse(html.fromstring(article.html), title, unix_time_to_string(article.published_time), normalized_url)
+    text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
     article.source_id = buzzfeed_source_id
     
@@ -1220,7 +1220,7 @@ try:
                 if ('http://' not in home_url and 'https://' not in home_url and 'buzzfeed.com' not in home_url):
                     home_url = BUZZFEED_HOME + home_url
                 try:
-                    article_home = Article(home_url)
+                    article_home = Article(home_url, keep_article_html=True)
                     extract_buzzfeed_article(article_home, True, buzzfeed_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage ' + home_page +  ' article:  {}'.format(e) + home_url)
@@ -1454,7 +1454,7 @@ def extract_business_insider_article(article, is_on_homepage, predifined_categor
     # get content
     article.parse()
     text = normalize_text(article.text)
-    text_html = true_html.escape(get_text_html_saulify(normalized_url), True)
+    text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
     article.source_id = business_insider_id
     
@@ -1513,7 +1513,7 @@ try:
                 if ('http://' not in home_url and 'https://' not in home_url):
                     home_url = BUSINESS_INSIDER + home_url
                 try:
-                    article_home = Article(home_url)
+                    article_home = Article(home_url, keep_article_html=True)
                     extract_business_insider_article(article_home, True, business_insider_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage' + home_page +  'article:  {}'.format(e) + " " +home_url)

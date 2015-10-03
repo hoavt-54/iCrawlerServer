@@ -378,7 +378,7 @@ def extract_washington_post_article(article, is_on_homepage, predifined_category
     # get content
     article.parse()
     text = normalize_text(article.text)
-    text_html = true_html.escape(get_text_html_saulify(normalized_url), True)
+    text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
     article.source_id = washington_post_source_id
         
@@ -426,7 +426,7 @@ try:
                 if ('http://' not in home_url and 'https://' not in home_url):
                     home_url = WASHINGTON_POST + home_url
                 try:
-                    article_home = Article(home_url)
+                    article_home = Article(home_url, keep_article_html=True)
                     extract_washington_post_article(article_home, True, washington_post_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage' + home_page +  'article:  {}'.format(e) + home_url)
@@ -665,7 +665,7 @@ def extract_abcnews_article(article, is_on_homepage, predifined_category=None):
     # get content
     article.parse()
     text = normalize_text(article.text)
-    text_html = true_html.escape(get_text_html_saulify(article.url), True)
+    text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
     article.source_id = abc_source_id
      
@@ -712,7 +712,7 @@ try:
                 if ('http://' not in home_url and 'https://' not in home_url):
                     home_url = ABC_HOMEPAGE + home_url
                 try:
-                    article_home = Article(home_url)
+                    article_home = Article(home_url, keep_article_html=True)
                     extract_abcnews_article(article_home, True, abc_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage ' + home_page +  ' article:  {}'.format(e) + home_url)
@@ -958,7 +958,7 @@ def extract_latimes_article(article, is_on_homepage, predifined_category=None):
     # get content
     article.parse()
     text = normalize_text(article.text)
-    text_html = true_html.escape(get_text_html_saulify(normalized_url), True)
+    text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
     article.source_id = latimes_source_id
     
@@ -1005,7 +1005,7 @@ try:
                 if ('http://' not in home_url and 'https://' not in home_url):
                     home_url = LA_TIMES_HOMEPAGE + home_url
                 try:
-                    article_home = Article(home_url)
+                    article_home = Article(home_url, keep_article_html=True)
                     extract_latimes_article(article_home, True, latimes_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage ' + home_page +  ' article:  {}'.format(e) + home_url)
