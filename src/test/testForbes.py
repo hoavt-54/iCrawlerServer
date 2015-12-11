@@ -43,6 +43,13 @@ try:
 except BaseException as dateE:
     print("problem with time: {}".format(dateE))
     
+try:
+    if (time_string is None):
+        time_string = re.search('(?<="date":)(\d+)', article_page.text).group(1);
+        print("extracted time: " + time_string)   
+except BaseException as dateE:
+    print("problem with time: {}".format(dateE))
+    
 
 date_time = parse(time_string)
 published_time = calendar.timegm(date_time.utctimetuple())
@@ -65,7 +72,7 @@ print(title)
 
 # get thumbnail
 try:
-    thumbnail_url = html_tree.xpath('//meta[@name="sailthru.image.full"]')[0].attrib['content']
+    thumbnail_url = html_tree.xpath('//meta[@property="og:image"')[0].attrib['content']
     print(thumbnail_url)
 except Exception as e:
     print('Thumbnaill not found.'.format(e))

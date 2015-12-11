@@ -16,7 +16,7 @@ import queue
 import json
 import re
 
-normalized_url = 'http://www.usatoday.com/story/sports/mlb/2015/04/22/barry-bonds-obstruction-conviction-overturned-hall-of-fame/26215105/'
+normalized_url = 'http://www.usatoday.com/story/sports/ufc/2015/12/10/ronda-rousey-holly-holm-rematch-july/77092136/'
 thumbnail_url = None
 short_description = None
 category_id = None

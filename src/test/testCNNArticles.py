@@ -17,7 +17,6 @@ import queue
 import re
 import requests
 
-
 normalized_url = 'http://edition.cnn.com/2015/05/07/news/economy/moldova-stolen-billion/index.html'
 thumbnail_url = None
 short_description = None
@@ -81,6 +80,13 @@ except Exception as e:
     print(thumbnail_url)
 short_description = html_tree.xpath('//meta[@property="og:description"]')[0].attrib['content']
 print(short_description)
+
+
+try:
+    
+    print(thumbnail_url)
+except Exception as e:
+    print('keywords not found'.format(e))
 
 
 try:

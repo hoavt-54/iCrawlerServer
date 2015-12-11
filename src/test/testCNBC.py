@@ -18,7 +18,7 @@ import requests
 import time
 
 
-normalized_url = 'http://www.cnbc.com/id/102719664'
+normalized_url = 'http://www.cnbc.com/2015/11/21/luggage-gets-smart-for-the-holidays.html'
 thumbnail_url = None
 short_description = None
 time_string = None

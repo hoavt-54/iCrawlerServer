@@ -17,7 +17,7 @@ import requests
 import time
 
 
-normalized_url = 'http://abcnews.go.com/Travel/hottest-vacation-cities-cheapskates/story?id=30555568'
+normalized_url = 'http://abcnews.go.com/Politics/amid-biggest-nh-protests-trump-downplays-controversy/story?id=35707504'
 thumbnail_url = None
 short_description = None
 category_id = None
@@ -30,12 +30,15 @@ html_tree = html.fromstring(article_page.text)
 
 try:
     time_string = html_tree.xpath('//meta[@itemprop="datepublished"]')[0].attrib['content']
-    #time_string = time_string + " UTC-0400"
+    #time_string = time_string + " UTC -5:00"
 except BaseException as dateE:
     print("problem with time: {}".format(dateE))
 try:
     if (time_string is None):
-        time_string = html_tree.xpath('//div[@class="date"]/text()')[0]
+        time_string = html_tree.xpath('//meta[@name="Last-Modified"]')[0].attrib['content']
+        time_string = time_string + " -5:00"
+        
+        print(time_string)
 except BaseException as dateE:
     print("problem with time: {}".format(dateE))
 try:
@@ -45,6 +48,8 @@ except BaseException as dateE:
     print("problem with time: {}".format(dateE))
 date_time = parse(time_string)
 published_time = calendar.timegm(date_time.utctimetuple())
+print("time saved: ")
+print(datetime.fromtimestamp(published_time))
 print(published_time)
 
 

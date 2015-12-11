@@ -114,7 +114,9 @@ class IIIDatbaseConnection:
     def insert_article (self, url, title, facebook_id, source_id, category_id, comment_count,
                         share_count, like_count, is_top_story, is_on_homepage, updated_time, thumbnail_url, short_description ):
         cursor = self.cursor()
-        sql = "INSERT INTO articles (url, title, facebook_id, source_id, category_id, comment_count, share_count, like_count,is_top_story_on_their_site, is_on_home_page, updated_time, thumbnail_url, short_description) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        sql = "INSERT INTO articles (url, title, facebook_id, source_id, category_id, comment_count, share_count, like_count," \
+        "is_top_story_on_their_site, is_on_home_page, updated_time, thumbnail_url, short_description) VALUES " \
+        "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         result = cursor.execute(sql, (url, title, facebook_id, source_id, category_id, comment_count,
                         share_count, like_count, is_top_story, is_on_homepage, updated_time, thumbnail_url, short_description))
         self.db_connection.commit()
@@ -126,7 +128,9 @@ class IIIDatbaseConnection:
     def insert_article2 (self, url, title, source_id, category_id, is_top_story, 
                          is_on_homepage, updated_time, thumbnail_url, short_description, country):
         cursor = self.cursor()
-        sql = "INSERT INTO articles (url, title, source_id, category_id, is_top_story_on_their_site, is_on_home_page, updated_time, thumbnail_url, short_description, country) VALUE (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        sql = "INSERT INTO articles (url, title, source_id, category_id, is_top_story_on_their_site,"\
+        " is_on_home_page, updated_time, thumbnail_url, short_description, country) VALUE "\
+        "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         result = cursor.execute(sql, (url, title, source_id, category_id, is_top_story, 
                          is_on_homepage, updated_time, thumbnail_url, short_description, country))
         self.db_connection.commit()
@@ -136,23 +140,18 @@ class IIIDatbaseConnection:
     
     # method 2 to insert article
     def insert_article3 (self, url, title, source_id, category_id, is_top_story, 
-                         is_on_homepage, updated_time, thumbnail_url, short_description, country, text_html, text, normalized_title):
+                         is_on_homepage, updated_time, thumbnail_url, short_description,
+                          country, text_html, text, normalized_title, keywords):
         cursor = self.cursor()
-        '''cursor.execute("SELECT id,text, updated_time, title, source_id FROM articles WHERE is_duplicated = 0 AND UNIX_TIMESTAMP() - updated_time < " + str(48 * 60 * 60) + "  AND category_id='" + category_id+"'")
-        articles_set = cursor.fetchall()
-        print("compares with {}", len(articles_set))
-        for article in articles_set:
-            similarity_content = get_consine_text(article[1], text)
-            similarity_title = get_consine_text(normalize_text(article[3]), normalize_text(title))
-            similarity = (3 * similarity_content + 2 * similarity_title)/5
-            if (similarity > 0.56 or similarity_title > 0.8):
-                print("duplicated with :")
-                print("{} from {}", article[3], article[4])
-                return 0'''
-        
-        sql = "INSERT INTO articles (url, title, source_id, category_id, is_top_story_on_their_site, is_on_home_page, updated_time, thumbnail_url, short_description, country, text_html, text, normalized_title) VALUE (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+#         if(keywords is None):
+#             print("Keywords is empty!!!!")
+#             keywords = "zzzzzzzzzzzzzzzzzzzzzz"
+        sql = "INSERT INTO articles (url, title, source_id, category_id, is_top_story_on_their_site, "\
+        " is_on_home_page, updated_time, thumbnail_url, short_description, country, text_html, text, "\
+        "normalized_title, keywords) VALUE (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         cursor.execute(sql, (url, title, source_id, category_id, is_top_story, 
-                         is_on_homepage, updated_time, thumbnail_url, short_description, country, text_html, text, normalized_title))
+                         is_on_homepage, updated_time, thumbnail_url, short_description, 
+                         country, text_html, text, normalized_title, keywords))
         result  = cursor.lastrowid
         self.db_connection.commit()
         cursor.close()
@@ -161,10 +160,13 @@ class IIIDatbaseConnection:
     
         
     # method to update count
-    def update_article_count(self, url, comment_count, share_count, like_count, facebook_plugin_id, twitter_count):
+    def update_article_count(self, url, comment_count, share_count, like_count, 
+                             facebook_plugin_id, twitter_count):
         cursor = self.cursor()
-        sql = "UPDATE articles SET comment_count = %s, share_count = %s, like_count = %s, facebook_plugin_id = %s , twitter_count = %s, last_update_statistic = %s where url = %s"
-        result = cursor.execute(sql, (comment_count, share_count, like_count, facebook_plugin_id, twitter_count, int(time.time()), url))
+        sql = "UPDATE articles SET comment_count = %s, share_count = %s, like_count = %s, "\
+        "facebook_plugin_id = %s , twitter_count = %s, last_update_statistic = %s where url = %s"
+        result = cursor.execute(sql, (comment_count, share_count, like_count, facebook_plugin_id,
+                                       twitter_count, int(time.time()), url))
         self.db_connection.commit()
         cursor.close()
         return result
@@ -228,7 +230,7 @@ class IIIDatbaseConnection:
             return result
         
     # method to update facebook id, facebook photo
-    def update_article_fbid_photo(self, url, facebook_id, fb_thumbnail_id):
+    def update_article_fbid_photo(self, url,thumbnail_fb_urls ,fb_thumbnail_id):
         cursor = self.cursor()
         sql = ""
         url2 = ""
@@ -237,14 +239,14 @@ class IIIDatbaseConnection:
                 url2 = url.replace("edition.cnn.com","www.cnn.com")
             if ("www.cnn.com" in url):
                 url2 = url.replace("www.cnn.com", "edition.cnn.com")
-            sql = "UPDATE articles SET facebook_id = %s, fb_thumbnail_id = %s where url in (%s, %s)"
-            result = cursor.execute(sql, (facebook_id, fb_thumbnail_id, url, url2))
+            sql = "UPDATE articles SET thumbnail_fb_urls = %s, fb_thumbnail_id = %s where url in (%s, %s)"
+            result = cursor.execute(sql, (thumbnail_fb_urls, fb_thumbnail_id, url, url2))
             self.db_connection.commit()
             cursor.close()
             return result
         else: 
-            sql = "UPDATE articles SET facebook_id = %s, fb_thumbnail_id = %s where url = %s"
-            result = cursor.execute(sql, (facebook_id, fb_thumbnail_id, url))
+            sql = "UPDATE articles SET thumbnail_fb_urls = %s, fb_thumbnail_id = %s where url = %s"
+            result = cursor.execute(sql, (thumbnail_fb_urls, fb_thumbnail_id, url))
             self.db_connection.commit()
             cursor.close()
             return result

@@ -18,7 +18,7 @@ import requests
 import time
 
 
-normalized_url = 'http://www.people.com/article/gina-dejesus-russian-roulette-cleveland-kidnapping'
+normalized_url = 'http://stylenews.peoplestylewatch.com/2015/12/09/princess-kate-middleton-hair-new-haircut/'
 thumbnail_url = None
 short_description = None
 time_string = None
