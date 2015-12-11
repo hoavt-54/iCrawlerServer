@@ -87,7 +87,7 @@ def normalize_text (text):
     print(singles)'''
         
     normalised_string1 = ""
-    with open ("../../stopwords_en.txt", "r") as myfile:
+    with open ("../stopwords_en.txt", "r") as myfile:
         stopwords=myfile.read().replace('\n', '')
     tokens1 = nltk.word_tokenize(text.lower())
     for word in tokens1:

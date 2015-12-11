@@ -16,7 +16,9 @@ import json
 import requests
 import sys
 import time
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from crawlerApp import PostAndGetFromFbPages
 from crawlerApp.PostAndGetFromFbPages import CommentLikeShrareGetterThread, \
     POISON, PostToFacebookPage
 from crawlerApp.utils import normalize_url, get_text_html_saulify, \
@@ -138,7 +140,7 @@ share_like_comment_thread.start()
 
 print('Start thread to post to page')
 post_queue = queue.Queue(35)
-page_poster_thread = PostToFacebookPage(queue=post_queue)
+page_poster_thread = PostToFacebookPage(queue=post_queue, ids= PostAndGetFromFbPages.pages_ids5, tokens=PostAndGetFromFbPages.pages_token5)
 page_poster_thread.start()
 '''
 ============================================================================================

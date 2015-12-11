@@ -89,7 +89,7 @@ class StatisticGetterThread(Thread):
                                 print(fb_resp.text)
                                 data = json.loads(fb_resp.text)[0]
                                 # from twitter
-                                tw_resp = None
+                                '''tw_resp = None
                                 tw_share = 0
                                 try:
                                     tw_resp = requests.get(url=TWITTER_URL_API, params = tw_param)
@@ -98,13 +98,13 @@ class StatisticGetterThread(Thread):
                                 if(tw_resp is not None):
                                     twi_data = json.loads(tw_resp.text)
                                     tw_share = twi_data['count']
-                                #print(data)
-                                #print(twi_data)
+                                print(data)
+                                print(twi_data)'''
                                 try:
                                     save_cont = IIIDatbaseConnection()
                                     save_cont.init_database_cont()
                                     print(save_cont.update_article_count(next_url, data['comment_count'],
-                                                                     data['share_count'], data['like_count'], data['comments_fbid'], tw_share))
+                                                                     data['share_count'], data['like_count'], data['comments_fbid'], 0))
                                 except Exception as e:
                                     print("Error when update count for article: {}".format(e))   
                                 finally:
