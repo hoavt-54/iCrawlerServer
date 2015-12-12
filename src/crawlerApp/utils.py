@@ -22,7 +22,7 @@ def hasNumbers(inputString):
     return any(char.isdigit() for char in inputString)
 
 def normalize_url (url):
-    if ('http://abcnews.go.com/' in url):
+    if ('http://abcnews.go.com/' in url or "reuters.com" in url):
         url = url.split("#")[0].split("&")[0];
     else:
         url = url.split("?")[0].split("#")[0];
