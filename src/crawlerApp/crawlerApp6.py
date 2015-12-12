@@ -87,6 +87,7 @@ cnbc_category = {'US: News' : 'news',
                 'CNBC Explains' : 'news',
                 'U.S. News' : 'news',
                 'Europe: News' : 'world',
+                'World News' : 'world',
                 'White House' : 'politics',
                 'Politics' : 'politics',
                 'Congress' : 'politics',
@@ -143,13 +144,15 @@ cnbc_category = {'US: News' : 'news',
                 'Retirement' : 'life',
                 'Savings' : 'life',
                 'Career' : 'life',
-                'College' : 'life',
+                'College' : 'education',
+                'Life' : 'life',
                 'small business week' : 'business',
                 'Small Business' : 'business',
                 'Road to Iconic' : 'business',
                 'Labor Unions' : 'business',
                 'Restaurants' : 'business',
                 'Consumer Staples' : 'business',
+                'IPOs' : 'business',
                 'Obamacare' : 'politics',
                 'Terrorism' : 'world',
                 'world' : 'world',
@@ -171,7 +174,8 @@ cnbc_category = {'US: News' : 'news',
                 'meet-the-press' : 'politics',
                 'first-read' : 'politics',
                 'nightly-news' : 'news',
-                'Start-ups' : 'business'
+                'Start-ups' : 'business',
+                'World Economy' : 'world'
                 }
            
                
@@ -302,7 +306,15 @@ def extract_cnbcnews_article(article, is_on_homepage, predifined_category=None):
     except Exception as e:
         print('Description not found again'.format(e))
     article.short_description = short_description
-               
+    
+    #keywords
+    try:
+        article.keywords = ""; 
+        keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
+        article.keywords = keywords.lower();
+        print(article.keywords)
+    except Exception as e:
+        print("")           
                
     # get category
     try:
@@ -338,7 +350,8 @@ def extract_cnbcnews_article(article, is_on_homepage, predifined_category=None):
     try:
         article.id = db_connect.insert_article3(normalized_url, article.title, cnbc_source_id, 
                                      article.category_id, False, is_on_homepage, article.published_time,
-                                     article.thumbnail_url, article.short_description, USA, text_html, text, normalized_title)
+                                     article.thumbnail_url, article.short_description, USA, text_html,
+                                     text, normalized_title, article.keywords)
     except Exception as dbE:
         print("Error when insert article to db. {}".format(dbE))
     # after insert to database, we put this url to get share, comment, like
@@ -346,24 +359,14 @@ def extract_cnbcnews_article(article, is_on_homepage, predifined_category=None):
     article.url = normalized_url
     post_queue.put(article, True)
            
-           
-           
-           
                
                
                
-               
-               
-               
-               
-               
-               
-               
-               
-               
-               
-               
-            
+                
+                
+                
+                
+             
 print('...................................................\n' +
       '...................................................\n' + 
       '...................................................\n' +
@@ -374,9 +377,9 @@ print('...................................................\n' +
 try:
     db_connect = IIIDatbaseConnection()
     db_connect.init_database_cont()     
-               
-               
-               
+                
+                
+                
     ''' we process homepage'''
     for home_page in cnbc_home_pages:
         print("extracting: " + home_page)
@@ -392,20 +395,20 @@ try:
                     extract_cnbcnews_article(article_home, True, cnbc_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage' + home_page +  'article:  {}'.format(e) + home_url)
-               
-               
-               
-               
-               
-               
-               
-               
-            
+                
+                
+                
+                
+                
+                
+                
+                
+             
     db_connect.close_database_cont()   
 except Exception as e:        
     print('Something went wrong with database: {}'.format(e))    
-               
-               
+                
+                
            
 '''
 =======================================================================================================================================
@@ -571,7 +574,15 @@ def extract_mailonline_article(article, is_on_homepage, predifined_category=None
         print('Description not found again'.format(e))
     article.short_description = short_description
                
-               
+    
+    #keywords
+    try:
+        article.keywords = ""; 
+        keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
+        article.keywords = keywords.lower();
+    except Exception as e:
+        print("")
+    
     # get category
     try:
         category_id = html_tree.xpath('//meta[@property="article:section"]')[0].attrib['content']
@@ -605,32 +616,21 @@ def extract_mailonline_article(article, is_on_homepage, predifined_category=None
     try:
         article.id = db_connect.insert_article3(normalized_url, article.title, daily_mail_id, 
                                      article.category_id, False, is_on_homepage, article.published_time,
-                                     article.thumbnail_url, article.short_description, USA, text_html, text, normalized_title)
+                                     article.thumbnail_url, article.short_description, USA,
+                                     text_html, text, normalized_title, article.keywords)
     except Exception as dbE:
         print("Error when insert article to db. {}".format(dbE))
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
     article.url = normalized_url
     post_queue.put(article, True)
-           
-           
-           
-           
-               
-               
-               
-               
-               
-               
-               
-               
-               
-               
-               
-               
-               
-               
-            
+                 
+                
+                
+                
+                
+                
+             
 print('...................................................\n' +
       '...................................................\n' + 
       '...................................................\n' +
@@ -641,9 +641,9 @@ print('...................................................\n' +
 try:
     db_connect = IIIDatbaseConnection()
     db_connect.init_database_cont()     
-               
-               
-               
+                
+                
+                
     ''' we process homepage'''
     for home_page in mail_home_pages:
         print("extracting: " + home_page)
@@ -659,20 +659,20 @@ try:
                     extract_mailonline_article(article_home, True, mail_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage' + home_page +  'article:  {}'.format(e) + home_url)
-               
-               
-               
-               
-               
-               
-               
-               
-            
+                
+                
+                
+                
+                
+                
+                
+                
+             
     db_connect.close_database_cont()   
 except Exception as e:        
     print('Something went wrong with database: {}'.format(e))    
-               
-               
+                
+                
            
 '''
 =======================================================================================================================================
@@ -818,6 +818,18 @@ def extract_politico_article(article, is_on_homepage, predifined_category=None):
     except Exception as e:
         print('Description not found again'.format(e))
     article.short_description = short_description
+    
+    
+    #keywords
+    try:
+        article.keywords = ""; 
+        keywords = "";
+        for word in html_tree.xpath('//aside[@class="content-categories"]/ul/li/a[@target="_top"]/text()'):
+            keywords = keywords + word +","
+        keywords = keywords[:-1]
+        article.keywords = keywords.lower();
+    except Exception as e:
+        print("")
                 
                 
     # get category
@@ -844,7 +856,8 @@ def extract_politico_article(article, is_on_homepage, predifined_category=None):
     try:
         article.id = db_connect.insert_article3(normalized_url, article.title, politico_id, 
                                      article.category_id, False, is_on_homepage, article.published_time,
-                                     article.thumbnail_url, article.short_description, USA, text_html, text, normalized_title)
+                                     article.thumbnail_url, article.short_description, USA, 
+                                     text_html, text, normalized_title, article.keywords)
     except Exception as dbE:
         print("Error when insert article to db. {}".format(dbE))
     # after insert to database, we put this url to get share, comment, like
@@ -868,8 +881,8 @@ def extract_politico_article(article, is_on_homepage, predifined_category=None):
                 
                 
                 
-                
-             
+                 
+              
 print('...................................................\n' +
       '...................................................\n' + 
       '...................................................\n' +
@@ -880,9 +893,9 @@ print('...................................................\n' +
 try:
     db_connect = IIIDatbaseConnection()
     db_connect.init_database_cont()     
-                
-                
-                
+                 
+                 
+                 
     ''' we process homepage'''
     for home_page in politico_home_pages:
         print("extracting: " + home_page)
@@ -898,20 +911,20 @@ try:
                     extract_politico_article(article_home, True, politico_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage' + home_page +  'article:  {}'.format(e) + home_url)
-                
-                
-                
-                
-                
-                
-                
-                
-             
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+              
     db_connect.close_database_cont()   
 except Exception as e:        
     print('Something went wrong with database: {}'.format(e))    
-                
-                
+                 
+                 
             
 '''
 =======================================================================================================================================
@@ -957,8 +970,8 @@ billboard_home_pages = {
                 
                 
 def extract_billboard_article(article, is_on_homepage, predifined_category=None):
-    print(article.url + "\n")
-    if (  article.url in billboard_except  or 'billboard.com/articles/' not in article.url ): 
+    if (  article.url in billboard_except  or 'billboard.com/articles/' not in article.url 
+            or not hasNumbers(article.url) ): 
         return
     #print("url to extract: " + article.url)
     if (db_connect.is_url_existed(article.url) != -1):
@@ -987,8 +1000,8 @@ def extract_billboard_article(article, is_on_homepage, predifined_category=None)
     title = None
     thumbnail_url = None
     short_description = None
-    category_id = None
     date_time = None
+    keywords = "";
                  
     article.download()
     html_tree = html.fromstring(article.html)
@@ -998,15 +1011,14 @@ def extract_billboard_article(article, is_on_homepage, predifined_category=None)
     try:
         time_string = html_tree.xpath('//meta[@property="dcterms.date"]')[0].attrib['content']
         print("extracted time: " + time_string)
+        date_time = parse(time_string)
+        published_time = calendar.timegm(date_time.utctimetuple())
+        print("time saved: ")
+        print(datetime.fromtimestamp(published_time))
+        article.published_time = published_time
     except BaseException as dateE:
         print("problem with time: {}".format(dateE))
-    date_time = parse(time_string)
-    published_time = calendar.timegm(date_time.utctimetuple())
-    print("time saved: ")
-    print(datetime.fromtimestamp(published_time))
-    article.published_time = published_time
-    if (article.published_time > time.time()):
-            article.published_time = None
+        article.published_time = time.time() - 1800
                 
                 
     #title
@@ -1044,7 +1056,7 @@ def extract_billboard_article(article, is_on_homepage, predifined_category=None)
     except Exception as e:
         print('Thumbnaill not found again {}'.format(e))
     article.thumbnail_url = thumbnail_url
-                    
+    
                     
                 
     # get description
@@ -1065,7 +1077,7 @@ def extract_billboard_article(article, is_on_homepage, predifined_category=None)
     # get category
     article.category_id = predifined_category
     print("extracted category: "+ article.category_id)
-                
+    
                 
                 
                 
@@ -1076,6 +1088,13 @@ def extract_billboard_article(article, is_on_homepage, predifined_category=None)
                         
     # get content
     article.parse()
+    article.nlp()
+    if (article.thumbnail_url is None):
+        article.thumbnail_url = article.top_image
+    for key in article.keywords:
+        keywords = keywords + key + ","
+    keywords = keywords[0:-1]
+    print(keywords)
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
@@ -1086,7 +1105,8 @@ def extract_billboard_article(article, is_on_homepage, predifined_category=None)
     try:
         article.id = db_connect.insert_article3(normalized_url, article.title, billboard_id, 
                                      article.category_id, False, is_on_homepage, article.published_time,
-                                     article.thumbnail_url, article.short_description, USA, text_html, text, normalized_title)
+                                     article.thumbnail_url, article.short_description, USA,
+                                     text_html, text, normalized_title, keywords)
     except Exception as dbE:
         print("Error when insert article to db. {}".format(dbE))
     # after insert to database, we put this url to get share, comment, like
@@ -1094,24 +1114,13 @@ def extract_billboard_article(article, is_on_homepage, predifined_category=None)
     article.url = normalized_url
     post_queue.put(article, True)
             
-            
-            
-            
                 
                 
                 
                 
                 
-                
-                
-                
-                
-                
-                
-                
-                
-                
-             
+                 
+              
 print('...................................................\n' +
       '...................................................\n' + 
       '...................................................\n' +
@@ -1122,9 +1131,9 @@ print('...................................................\n' +
 try:
     db_connect = IIIDatbaseConnection()
     db_connect.init_database_cont()     
-                
-                
-                
+                 
+                 
+                 
     ''' we process homepage'''
     for home_page in billboard_home_pages:
         print("extracting: " + home_page)
@@ -1140,13 +1149,13 @@ try:
                     extract_billboard_article(article_home, True, billboard_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage' + home_page +  'article:  {}'.format(e) + home_url)
-                
-                
+                 
+                 
     db_connect.close_database_cont()   
 except Exception as e:        
     print('Something went wrong with database: {}'.format(e))    
-                
-                
+                 
+                 
             
 '''
 =======================================================================================================================================
@@ -1298,7 +1307,14 @@ def extract_fivethirtyeight_article(article, is_on_homepage, predifined_category
         print('Description not found again'.format(e))
     article.short_description = short_description
                
-               
+    #keywords
+    try:
+        article.keywords = ""; 
+        keywords = html_tree.xpath('//meta[@name="news_keywords"]')[0].attrib['content']
+        article.keywords = keywords.lower()
+    except Exception as e:
+        print("")
+              
     # get category
     article.category_id = predifined_category
     print("extracted category: "+ article.category_id)
@@ -1323,7 +1339,8 @@ def extract_fivethirtyeight_article(article, is_on_homepage, predifined_category
     try:
         article.id = db_connect.insert_article3(normalized_url, article.title, fivethirtyeight_id, 
                                      article.category_id, False, is_on_homepage, article.published_time,
-                                     article.thumbnail_url, article.short_description, USA, text_html, text, normalized_title)
+                                     article.thumbnail_url, article.short_description, USA, text_html,
+                                      text, normalized_title, article.keywords)
     except Exception as dbE:
         print("Error when insert article to db. {}".format(dbE))
     # after insert to database, we put this url to get share, comment, like
