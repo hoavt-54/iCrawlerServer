@@ -147,26 +147,6 @@ page_poster_thread.start()
 '''  
 
 
-
-
-
-
-
-
-
-
-
-
-
- 
- 
- 
- 
- 
- 
-  
-  
-   
                    
                         
 '''
@@ -200,14 +180,30 @@ huffington_category = {'Politics' : 'politics',
                        'Science' : 'science',
                        'Religion' : 'opinions',
                        'Black Voices' : 'opinions',
-                       'Gay Voices' : 'opinions'
+                       'Gay Voices' : 'opinions',
+                       'Impact' : 'community',
+                       'College' : 'education',
+                       'Post 50' : 'life'
                        }
                    
-huffington_except = {}
+huffington_homes = {'http://www.huffingtonpost.com/politics/' : 'politics',
+                    'http://www.huffingtonpost.com/business/' : 'business',
+                    'http://www.huffingtonpost.com/entertainment' : 'entertainment',
+                    'http://www.huffingtonpost.com/tech/' : 'tech',
+                    'http://www.huffingtonpost.com/media/' : 'news',
+                    'http://www.huffingtonpost.com/theworldpost' : 'world',
+                    'http://www.huffingtonpost.com/education' : 'education',
+                    'http://www.huffingtonpost.com/healthy-living/' : 'health',
+                    'http://www.huffingtonpost.com/comedy' : 'entertainment',
+                    'http://www.huffingtonpost.com/style' : 'style',
+                    'http://www.huffingtonpost.com/travel/' : 'travel',
+                    'http://www.huffingtonpost.com/sports' : 'sport',
+                    HUFFINGTON_POST_HOME : None 
+                    }
                
 def extract_huffington_article(article, is_on_homepage, predifined_category=None):
     #print("url to extract: " + article.url)
-    if ('/201' not in article.url or article.url in huffington_except or article.url + '/' in huffington_except or 'huffingtonpost.com' not in article.url ):
+    if ('/201' not in article.url  or 'huffingtonpost.com' not in article.url ):
         return
     if (db_connect.is_url_existed(article.url) != -1):
         print("url is already existed")
@@ -215,8 +211,6 @@ def extract_huffington_article(article, is_on_homepage, predifined_category=None
         return
     normalized_url = normalize_url(article.url)
     if ('huffingtonpost.com' not in normalized_url):
-        return
-    if (normalized_url in huffington_except or normalized_url + '/' in huffington_except):
         return
     if (db_connect.is_url_existed(normalized_url) != -1):
         print("url is already existed")
@@ -244,30 +238,25 @@ def extract_huffington_article(article, is_on_homepage, predifined_category=None
                     
     #get time
     try:
-        time_string = html_tree.xpath('//meta[@name="sailthru.date"]')[0].attrib['content']
+        time_string = html_tree.xpath('//meta[@itemprop="datePublished"]')[0].attrib['content']
     except BaseException as dateE:
         print("problem with time: {}".format(dateE))
-                       
-    #get time
     try:
         if (time_string is None):
             time_string = html_tree.xpath('//meta[@property="sailthru.date"]')[0].attrib['content']
     except BaseException as dateE:
         print("problem with time: {}".format(dateE)) 
-                    
-    if (time_string is not None):
-        date_time = parse(time_string)
-        article.published_time = calendar.timegm(date_time.utctimetuple())
-        if (article.published_time > time.time()):
-            article.published_time = None
-        print(article.published_time)
+    date_time = parse(time_string)
+    article.published_time = calendar.timegm(date_time.utctimetuple())
+    if (article.published_time > time.time()):
+        article.published_time = None
+    print(article.published_time)
                     
     #get title
     try:
         title = html_tree.xpath('//meta[@property="og:title"]')[0].attrib['content']
     except Exception as e:
         print("Title not found")
-                   
     try:
         if(title is None):
             title = html_tree.xpath('//title/text()')[0].split('|')[0]
@@ -278,7 +267,7 @@ def extract_huffington_article(article, is_on_homepage, predifined_category=None
                     
     # get thumbnail
     try:
-        thumbnail_url = html_tree.xpath('//link[@rel="image_src"]')[0].attrib['href']
+        thumbnail_url = html_tree.xpath('//meta[@property="og:image"]')[0].attrib['content']
         print(thumbnail_url)
     except Exception as e:
         print("")
@@ -316,7 +305,15 @@ def extract_huffington_article(article, is_on_homepage, predifined_category=None
     except Exception as e:
         print('Description not found again'.format(e))   
     article.short_description = short_description
-                    
+    
+    
+    #keywords
+    try:
+        article.keywords = ""; 
+        keywords = html_tree.xpath('//meta[@property="keywords"]')[0].attrib['content']
+        article.keywords = keywords.lower();
+    except Exception as e:
+        print("")            
                     
     # get category
     try:
@@ -354,7 +351,8 @@ def extract_huffington_article(article, is_on_homepage, predifined_category=None
     try:
         article.id = db_connect.insert_article3(normalized_url, article.title, huffington_source_id, 
                                      article.category_id, False, is_on_homepage, article.published_time,
-                                     article.thumbnail_url, article.short_description, USA, text_html, text, normalized_title)
+                                     article.thumbnail_url, article.short_description, USA, 
+                                     text_html, text, normalized_title, article.keywords)
     except Exception as dbE:
         print("Error when insert article to db. {}".format(dbE))
     # after insert to database, we put this url to get share, comment, like
@@ -364,7 +362,7 @@ def extract_huffington_article(article, is_on_homepage, predifined_category=None
                
                
                
-                
+                 
 print('...................................................\n' +
       '...................................................\n' + 
       '...................................................\n' +
@@ -375,290 +373,38 @@ print('...................................................\n' +
 try:
     db_connect = IIIDatbaseConnection()
     db_connect.init_database_cont() 
-               
-                   
-                   
-                   
+                
+                    
+                    
+                    
     ''' we process homepage polictis'''
-    HUFFINTION_POST_POLICTICS = 'http://www.huffingtonpost.com/politics/'
-    huffington_hompage_polictics = requests.get(HUFFINTION_POST_POLICTICS)
-    html_tree = html.fromstring(huffington_hompage_polictics.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = HUFFINGTON_POST_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_huffington_article(article_home, True, huffington_category.get('Polictis'))
-            except Exception as e:
-                print('Smt wrong when process homepage polictics  article:  {}'.format(e) + home_url)
-                      
-               
-               
-               
-               
-               
-    ''' we process homepage business'''
-    HUFFINTION_POST_BUSINESS= 'http://www.huffingtonpost.com/business/'
-    huffington_hompage_business = requests.get(HUFFINTION_POST_BUSINESS)
-    html_tree = html.fromstring(huffington_hompage_business.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = HUFFINGTON_POST_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_huffington_article(article_home, True, huffington_category.get('Business'))
-            except Exception as e:
-                print('Smt wrong when process homepage business  article:  {}'.format(e) + home_url)
-               
-               
-               
-               
-               
-               
-    ''' we process homepage entertainment'''
-    HUFFINTION_POST_ENTERTAIN= 'http://www.huffingtonpost.com/entertainment/'
-    huffington_hompage_business = requests.get(HUFFINTION_POST_ENTERTAIN)
-    html_tree = html.fromstring(huffington_hompage_business.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = HUFFINGTON_POST_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_huffington_article(article_home, True, 'entertainment')
-            except Exception as e:
-                print('Smt wrong when process homepage entertainment  article:  {}'.format(e) + home_url)
-               
-               
-               
-               
-               
-               
-               
-               
-               
-    ''' we process homepage tech'''
-    HUFFINTION_POST_ENTERTAIN= 'http://www.huffingtonpost.com/tech/'
-    huffington_hompage_business = requests.get(HUFFINTION_POST_ENTERTAIN)
-    html_tree = html.fromstring(huffington_hompage_business.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = HUFFINGTON_POST_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_huffington_article(article_home, True, 'tech')
-            except Exception as e:
-                print('Smt wrong when process homepage tech  article:  {}'.format(e) + home_url)
-               
-               
-               
-               
-               
-    ''' we process homepage media'''
-    HUFFINTION_POST_ENTERTAIN= 'http://www.huffingtonpost.com/media/'
-    huffington_hompage_business = requests.get(HUFFINTION_POST_ENTERTAIN)
-    html_tree = html.fromstring(huffington_hompage_business.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = HUFFINGTON_POST_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_huffington_article(article_home, True, 'news')
-            except Exception as e:
-                print('Smt wrong when process homepage media  article:  {}'.format(e) + home_url)
-               
-                           
-                           
-                           
-                   
-                   
-    ''' we process homepage world'''
-    HUFFINTION_POST_ENTERTAIN= 'http://www.huffingtonpost.com/theworldpost/'
-    huffington_hompage_business = requests.get(HUFFINTION_POST_ENTERTAIN)
-    html_tree = html.fromstring(huffington_hompage_business.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = HUFFINGTON_POST_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_huffington_article(article_home, True, 'world')
-            except Exception as e:
-                print('Smt wrong when process homepage world  article:  {}'.format(e) + home_url)
-#     
-                   
-                   
-                   
-                   
-                   
-                   
-    ''' we process homepage education'''
-    HUFFINTION_POST_ENTERTAIN= 'http://www.huffingtonpost.com/education/'
-    huffington_hompage_business = requests.get(HUFFINTION_POST_ENTERTAIN)
-    html_tree = html.fromstring(huffington_hompage_business.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = HUFFINGTON_POST_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_huffington_article(article_home, True, 'education')
-            except Exception as e:
-                print('Smt wrong when process homepage education  article:  {}'.format(e) + home_url)
-                               
-                               
-                               
-                               
-                               
-                               
-                               
-                               
-                               
-    ''' we process homepage health'''
-    HUFFINTION_POST_ENTERTAIN= 'http://www.huffingtonpost.com/healthy-living/'
-    huffington_hompage_business = requests.get(HUFFINTION_POST_ENTERTAIN)
-    html_tree = html.fromstring(huffington_hompage_business.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = HUFFINGTON_POST_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_huffington_article(article_home, True, 'health')
-            except Exception as e:
-                print('Smt wrong when process homepage health  article:  {}'.format(e) + home_url)
-               
-               
-               
-               
-               
-               
-               
-               
-                   
-    ''' we process homepage comedy'''
-    HUFFINTION_POST_ENTERTAIN= 'http://www.huffingtonpost.com/comedy/'
-    huffington_hompage_business = requests.get(HUFFINTION_POST_ENTERTAIN)
-    html_tree = html.fromstring(huffington_hompage_business.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = HUFFINGTON_POST_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_huffington_article(article_home, True, 'entertainment')
-            except Exception as e:
-                print('Smt wrong when process homepage comedy  article:  {}'.format(e) + home_url)
-               
-               
-                   
-                   
-                   
-                   
-                   
-                   
-    ''' we process homepage style'''
-    HUFFINTION_POST_ENTERTAIN= 'http://www.huffingtonpost.com/style/'
-    huffington_hompage_business = requests.get(HUFFINTION_POST_ENTERTAIN)
-    html_tree = html.fromstring(huffington_hompage_business.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = HUFFINGTON_POST_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_huffington_article(article_home, True, 'style')
-            except Exception as e:
-                print('Smt wrong when process homepage style  article:  {}'.format(e) + home_url)
-                   
-                   
-                   
-                   
-                   
-                   
-                   
-                   
-                   
-    ''' we process homepage travel'''
-    HUFFINTION_POST_ENTERTAIN= 'http://www.huffingtonpost.com/travel/'
-    huffington_hompage_business = requests.get(HUFFINTION_POST_ENTERTAIN)
-    html_tree = html.fromstring(huffington_hompage_business.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = HUFFINGTON_POST_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_huffington_article(article_home, True, 'travel')
-            except Exception as e:
-                print('Smt wrong when process homepage travel  article:  {}'.format(e) + home_url)
-                               
-                               
-                               
-                               
-                               
-                               
-                               
-    ''' we process homepage sports'''
-    HUFFINTION_POST_ENTERTAIN= 'http://www.huffingtonpost.com/sports/'
-    huffington_hompage_business = requests.get(HUFFINTION_POST_ENTERTAIN)
-    html_tree = html.fromstring(huffington_hompage_business.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = HUFFINGTON_POST_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_huffington_article(article_home, True, 'sport')
-            except Exception as e:
-                print('Smt wrong when process homepage sport  article:  {}'.format(e) + home_url)           
-                               
-                               
-                               
-                               
-                               
-                               
-    ''' we process homepage'''
-    huffington_hompage_business = requests.get(HUFFINGTON_POST_HOME)
-    html_tree = html.fromstring(huffington_hompage_business.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = HUFFINGTON_POST_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_huffington_article(article_home, True, 'sport')
-            except Exception as e:
-                print('Smt wrong when process homepage article:  {}'.format(e) + home_url)       
+    for homepage in huffington_homes:
+        print("extracting: " + homepage)
+        huffington_hompage = requests.get(homepage)
+        html_tree = html.fromstring(huffington_hompage.text)
+        article_urls = html_tree.xpath('//a/@href')
+        for home_url in article_urls:
+            if  home_url is not None and len(home_url) > 30: 
+                if ('http://' not in home_url and 'https://' not in home_url):
+                    home_url = HUFFINGTON_POST_HOME + home_url
+                try:
+                    article_home = Article(home_url, keep_article_html=True)
+                    extract_huffington_article(article_home, True, huffington_homes.get(homepage))
+                except Exception as e:
+                    print('Smt wrong when process homepage  article:  {}'.format(e) + home_url)
+                       
                 
                 
                 
-                               
-               
-               
-               
-               
+                
+     
+                
+                
+                
     db_connect.close_database_cont()   
 except Exception as e:        
     print('Something went wrong with database: {}'.format(e))
-                    
+                     
                     
     '''
     =======================================================================================================================================
@@ -668,50 +414,10 @@ except Exception as e:
     =======================================================================================================================================
     '''
                
-               
-               
-               
-             
-           
-    
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-    
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-             
-             
-             
-             
-             
-             
-             
-             
-             
-             
-             
+              
+              
+              
+              
              
              
 '''
@@ -721,6 +427,19 @@ except Exception as e:
 =======================================================================================================================================
 =======================================================================================================================================
 ''' 
+    
+newyork_homes = {'http://www.nytimes.com/pages/world/index.html' : 'world',
+                 'http://www.nytimes.com/pages/national/index.html' : 'news',
+                 'http://www.nytimes.com/pages/politics/index.html' : 'politics',
+                 'http://www.nytimes.com/pages/nyregion/index.html' : 'news',
+                 'http://www.nytimes.com/pages/business/index.html' : 'business',
+                 'http://www.nytimes.com/pages/opinion/index.html' : 'opinions',
+                 'http://www.nytimes.com/pages/technology/index.html' : 'tech',
+                 'http://www.nytimes.com/pages/science/index.html' : 'science',
+                 'http://www.nytimes.com/pages/travel/index.html' : 'travel',
+                 'http://www.nytimes.com/pages/fashion/index.html' : 'style',
+                 'http://www.nytimes.com/pages/health/index.html' : 'health'
+                 }
              
 newyorktime_category = {'Middle East' : 'world',
                        'Africa' : 'world',
@@ -751,6 +470,7 @@ newyorktime_category = {'Middle East' : 'world',
                        'International Business' : 'business',
                        'Health' : 'health',
                        'Media': 'business',
+                       'Your Money' : 'life',
                        'World' : 'world',
                        'Environment' : 'science'
                        }
@@ -861,7 +581,15 @@ def extract_newyorktime_article(article, is_on_homepage, predifined_category=Non
     except Exception as e:
         print('Description not found again'.format(e))
     article.short_description = short_description
-                 
+    
+    
+    #keywords
+    try:
+        article.keywords = ""; 
+        keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
+        article.keywords = keywords.lower();
+    except Exception as e:
+        print("")       
                  
     # get category
     try:
@@ -904,7 +632,8 @@ def extract_newyorktime_article(article, is_on_homepage, predifined_category=Non
     try:
         article.id = db_connect.insert_article3(normalized_url, article.title, newyorktimes_source_id, 
                                      article.category_id, False, is_on_homepage, article.published_time,
-                                     article.thumbnail_url, article.short_description, USA, text_html, text, normalized_title)
+                                     article.thumbnail_url, article.short_description, USA, text_html, 
+                                     text, normalized_title, article.keywords)
     except Exception as dbE:
         print("Error when insert article to db. {}".format(dbE))
     # after insert to database, we put this url to get share, comment, like
@@ -917,7 +646,7 @@ def extract_newyorktime_article(article, is_on_homepage, predifined_category=Non
              
              
              
-              
+               
 print('...................................................\n' +
       '...................................................\n' + 
       '...................................................\n' +
@@ -928,233 +657,34 @@ print('...................................................\n' +
 try:
     db_connect = IIIDatbaseConnection()
     db_connect.init_database_cont() 
-             
-                 
-                 
-                 
+              
+                  
+                  
+                  
     ''' we process world articles'''
-    NEWYORK_TIME_PAGE = 'http://www.nytimes.com/pages/world/index.html'
-    newyork_time_page = requests.get(NEWYORK_TIME_PAGE)
-    html_tree = html.fromstring(newyork_time_page.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = NEWYORKTIME_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_newyorktime_article(article_home, True, 'world')
-            except Exception as e:
-                print('Smt wrong when process newyork time world article:  {}'.format(e) + home_url)
-                              
-                              
-                              
-                              
-                  
-                  
-                  
-    ''' we process usa articles'''
-    NEWYORK_TIME_PAGE = 'http://www.nytimes.com/pages/national/index.html'
-    newyork_time_page = requests.get(NEWYORK_TIME_PAGE)
-    html_tree = html.fromstring(newyork_time_page.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = NEWYORKTIME_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_newyorktime_article(article_home, True, 'news')
-            except Exception as e:
-                print('Smt wrong when process newyork time usa article:  {}'.format(e) + home_url)
-                              
-                              
-                              
-                  
-                  
-    ''' we process polictics articles'''
-    NEWYORK_TIME_PAGE = 'http://www.nytimes.com/pages/politics/index.html'
-    newyork_time_page = requests.get(NEWYORK_TIME_PAGE)
-    html_tree = html.fromstring(newyork_time_page.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = NEWYORKTIME_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_newyorktime_article(article_home, True,'politics')
-            except Exception as e:
-                print('Smt wrong when process newyork time polictics article:  {}'.format(e) + home_url)           
-                              
-                              
-                          
-                          
-                          
-                          
-    ''' we process newyork religion articles'''
-    NEWYORK_TIME_PAGE = 'http://www.nytimes.com/pages/nyregion/index.html'
-    newyork_time_page = requests.get(NEWYORK_TIME_PAGE)
-    html_tree = html.fromstring(newyork_time_page.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = NEWYORKTIME_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_newyorktime_article(article_home, True,'news')
-            except Exception as e:
-                print('Smt wrong when process newyork religion article:  {}'.format(e) + home_url)     
-              
-                              
-                              
-                              
-                              
-                              
-    ''' we process newyork business articles'''
-    NEWYORK_TIME_PAGE = 'http://www.nytimes.com/pages/business/index.html'
-    newyork_time_page = requests.get(NEWYORK_TIME_PAGE)
-    html_tree = html.fromstring(newyork_time_page.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = NEWYORKTIME_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_newyorktime_article(article_home, True,'business')
-            except Exception as e:
-                print('Smt wrong when process newyork business article:  {}'.format(e) + home_url)                 
-                              
-                              
-                             
-                             
-                             
-                             
-    ''' we process newyork opinions articles'''
-    NEWYORK_TIME_PAGE = 'http://www.nytimes.com/pages/opinion/index.html'
-    newyork_time_page = requests.get(NEWYORK_TIME_PAGE)
-    html_tree = html.fromstring(newyork_time_page.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = NEWYORKTIME_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_newyorktime_article(article_home, True,'opinions')
-            except Exception as e:
-                print('Smt wrong when process newyork opinions article:  {}'.format(e) + home_url) 
-                             
-                             
-              
-              
-              
-    ''' we process newyork tech articles'''
-    NEWYORK_TIME_PAGE = 'http://www.nytimes.com/pages/technology/index.html'
-    newyork_time_page = requests.get(NEWYORK_TIME_PAGE)
-    html_tree = html.fromstring(newyork_time_page.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = NEWYORKTIME_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_newyorktime_article(article_home, True,'tech')
-            except Exception as e:
-                print('Smt wrong when process newyork tech article:  {}'.format(e) + home_url) 
-              
-              
-              
-              
-              
-    ''' we process newyork science articles'''
-    NEWYORK_TIME_PAGE = 'http://www.nytimes.com/pages/science/index.html'
-    newyork_time_page = requests.get(NEWYORK_TIME_PAGE)
-    html_tree = html.fromstring(newyork_time_page.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = NEWYORKTIME_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_newyorktime_article(article_home, True,'science')
-            except Exception as e:
-                print('Smt wrong when process newyork science article:  {}'.format(e) + home_url) 
-                             
-                 
-                 
-                 
-                 
-                 
-    ''' we process newyork travel articles'''
-    NEWYORK_TIME_PAGE = 'http://www.nytimes.com/pages/travel/index.html'
-    newyork_time_page = requests.get(NEWYORK_TIME_PAGE)
-    html_tree = html.fromstring(newyork_time_page.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = NEWYORKTIME_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_newyorktime_article(article_home, True,'travel')
-            except Exception as e:
-                print('Smt wrong when process newyork travel article:  {}'.format(e) + home_url) 
-                 
-                 
-                 
-                 
-                 
-    ''' we process newyork style articles'''
-    NEWYORK_TIME_PAGE = 'http://www.nytimes.com/pages/fashion/index.html'
-    newyork_time_page = requests.get(NEWYORK_TIME_PAGE)
-    html_tree = html.fromstring(newyork_time_page.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = NEWYORKTIME_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_newyorktime_article(article_home, True,'style')
-            except Exception as e:
-                print('Smt wrong when process newyork style article:  {}'.format(e) + home_url) 
-                 
-                 
-                 
-                 
-                 
-                 
-    ''' we process newyork health articles'''
-    NEWYORK_TIME_PAGE = 'http://www.nytimes.com/pages/health/index.html'
-    newyork_time_page = requests.get(NEWYORK_TIME_PAGE)
-    html_tree = html.fromstring(newyork_time_page.text)
-    article_urls = html_tree.xpath('//a/@href')
-    for home_url in article_urls:
-        if  home_url is not None and len(home_url) > 16: 
-            if ('http://' not in home_url and 'https://' not in home_url):
-                home_url = NEWYORKTIME_HOME + home_url
-            try:
-                article_home = Article(home_url, keep_article_html=True)
-                extract_newyorktime_article(article_home, True,'health')
-            except Exception as e:
-                print('Smt wrong when process newyork health article:  {}'.format(e) + home_url) 
-                 
-                 
-                  
-                             
-                             
-                             
-                             
-             
+    for page in newyork_homes:
+        newyork_time_page = requests.get(page)
+        html_tree = html.fromstring(newyork_time_page.text)
+        article_urls = html_tree.xpath('//a/@href')
+        for home_url in article_urls:
+            if  home_url is not None and len(home_url) > 16: 
+                if ('http://' not in home_url and 'https://' not in home_url):
+                    home_url = NEWYORKTIME_HOME + home_url
+                try:
+                    article_home = Article(home_url, keep_article_html=True)
+                    extract_newyorktime_article(article_home, True, newyork_homes.get(page))
+                except Exception as e:
+                    print('Smt wrong when process newyork time  article:  {}'.format(e) + home_url)
+                               
+                               
+                               
+                               
+                   
+     
     db_connect.close_database_cont()   
 except Exception as e:        
     print('Something went wrong with database: {}'.format(e))
-                      
+                       
     '''
     =======================================================================================================================================
     =======================================================================================================================================
@@ -1164,18 +694,7 @@ except Exception as e:
     '''
            
            
-           
-           
-           
-           
-           
-           
-           
-          
-          
-          
-          
-          
+
           
           
 '''
@@ -1207,7 +726,8 @@ nbc_category = {'us-news' : 'news',
                 'investigations' : 'news',
                 'meet-the-press' : 'politics',
                 'first-read' : 'politics',
-                'nightly-news' : 'news'
+                'nightly-news' : 'news',
+                'storyline' : 'news'
                 }
           
               
@@ -1270,7 +790,8 @@ def extract_nbcnews_article(article, is_on_homepage, predifined_category=None):
     short_description = None
     category_id = None
     date_time = None
-               
+    keywords = ""
+    
     article.download()
     html_tree = html.fromstring(article.html)
                
@@ -1403,6 +924,10 @@ def extract_nbcnews_article(article, is_on_homepage, predifined_category=None):
     article.source_name = "NBC NEWS"          
     # get content
     article.parse()
+    article.nlp()
+    for key in article.keywords:
+        keywords = keywords + key + ","
+    keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
@@ -1413,7 +938,8 @@ def extract_nbcnews_article(article, is_on_homepage, predifined_category=None):
     try:
         article.id = db_connect.insert_article3(normalized_url, article.title, nbc_source_id, 
                                      article.category_id, False, is_on_homepage, article.published_time,
-                                     article.thumbnail_url, article.short_description, USA, text_html, text, normalized_title)
+                                     article.thumbnail_url, article.short_description, USA, 
+                                     text_html, text, normalized_title, keywords)
     except Exception as dbE:
         print("Error when insert article to db. {}".format(dbE))
     # after insert to database, we put this url to get share, comment, like
@@ -1422,23 +948,12 @@ def extract_nbcnews_article(article, is_on_homepage, predifined_category=None):
     post_queue.put(article, True)
           
           
-          
-          
+
               
               
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-           
+               
+               
+            
 print('...................................................\n' +
       '...................................................\n' + 
       '...................................................\n' +
@@ -1449,9 +964,9 @@ print('...................................................\n' +
 try:
     db_connect = IIIDatbaseConnection()
     db_connect.init_database_cont()     
-              
-              
-              
+               
+               
+               
     ''' we process homepage'''
     for home_page in nbc_home_pages:
         print("extracting: " + home_page)
@@ -1470,20 +985,20 @@ try:
                     extract_nbcnews_article(article_home, True, nbc_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage' + home_page +  'article:  {}'.format(e) + home_url)
-              
-              
-              
-              
-              
-              
-              
-              
-           
+               
+               
+               
+               
+               
+               
+               
+               
+            
     db_connect.close_database_cont()   
 except Exception as e:        
     print('Something went wrong with database: {}'.format(e))    
-              
-              
+               
+               
           
 '''
 =======================================================================================================================================
@@ -1595,7 +1110,7 @@ def extract_mashable_article(article, is_on_homepage, predifined_category=None):
     published_time = calendar.timegm(date_time.utctimetuple())
     print("time saved: ")
     print(datetime.fromtimestamp(published_time))
-    article.published_time = published_time
+    article.published_time = published_time - 1800
     if (article.published_time > time.time()):
             article.published_time = None
               
@@ -1651,6 +1166,14 @@ def extract_mashable_article(article, is_on_homepage, predifined_category=None):
     except Exception as e:
         print('Description not found again'.format(e))
     article.short_description = short_description
+    
+    #keywords
+    try:
+        article.keywords = ""; 
+        keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
+        article.keywords = keywords.lower();
+    except Exception as e:
+        print("")
               
               
     # get category
@@ -1686,7 +1209,8 @@ def extract_mashable_article(article, is_on_homepage, predifined_category=None):
     try:
         article.id = db_connect.insert_article3(normalized_url, article.title, mashable_source_id, 
                                      article.category_id, False, is_on_homepage, article.published_time,
-                                     article.thumbnail_url, article.short_description, USA, text_html, text, normalized_title)
+                                     article.thumbnail_url, article.short_description, USA, 
+                                     text_html, text, normalized_title, article.keywords)
     except Exception as dbE:
         print("Error when insert article to db. {}".format(dbE))
     # after insert to database, we put this url to get share, comment, like
@@ -1696,21 +1220,6 @@ def extract_mashable_article(article, is_on_homepage, predifined_category=None):
           
           
           
-          
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
            
 print('...................................................\n' +
       '...................................................\n' + 
