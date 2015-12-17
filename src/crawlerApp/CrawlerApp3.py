@@ -306,6 +306,7 @@ def extract_bloomberg_article(article, is_on_homepage, predifined_category=None)
     #keywords
     keywords = ""; 
     try:
+        article.keywords = None
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         keywords = keywords.lower();
     except Exception as e:
@@ -339,6 +340,7 @@ def extract_bloomberg_article(article, is_on_homepage, predifined_category=None)
     article.parse()
     if (len(keywords) < 2): # no keywords
         article.nlp()
+        keywords = ""
         for key in article.keywords:
             keywords = keywords + key + ","
         keywords = keywords[0:-1]
@@ -603,6 +605,7 @@ def extract_foxnews_article(article, is_on_homepage, predifined_category=None):
     #keywords
     keywords = ""; 
     try:
+        article.keywords = None
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         keywords = keywords.lower();
     except Exception as e:
@@ -645,6 +648,7 @@ def extract_foxnews_article(article, is_on_homepage, predifined_category=None):
     article.parse()
     if (len(keywords) < 2):
         article.nlp()
+        keywords = ""
         for key in article.keywords:
             keywords = keywords + key + ","
         keywords = keywords[0:-1]
@@ -1182,7 +1186,7 @@ def extract_buzzfeed_article(article, is_on_homepage, predifined_category=None):
     
     #keywords
     try:
-        article.keywords = ""; 
+        article.keywords = None; 
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         article.keywords = keywords.lower();
     except Exception as e:
@@ -1228,6 +1232,12 @@ def extract_buzzfeed_article(article, is_on_homepage, predifined_category=None):
     article.source_name = "BUZZFEED"        
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     #extractor = buzzFeedContentExtractor()
     #extractor.parse(html.fromstring(article.html), title, unix_time_to_string(article.published_time), normalized_url)
@@ -1503,7 +1513,7 @@ def extract_business_insider_article(article, is_on_homepage, predifined_categor
     
     #keywords
     try:
-        article.keywords = ""; 
+        article.keywords = None
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         article.keywords = keywords.lower();
     except Exception as e:
@@ -1519,6 +1529,12 @@ def extract_business_insider_article(article, is_on_homepage, predifined_categor
     article.source_name = "BUSINESS INSIDER"           
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)

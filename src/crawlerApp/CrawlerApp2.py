@@ -37,14 +37,6 @@ from iiidatabase.DatabaseConnectionLib import IIIDatbaseConnection
 
 
 
-
-
-
-
-
-
-
-
 cnn_category = {    'sport' : 'sport',
                     'world' : 'world',
                     'tech' : 'tech',
@@ -328,6 +320,7 @@ def extract_washington_post_article(article, is_on_homepage, predifined_category
     #keywords
     keywords = ""; 
     try:
+        article.keywords = None
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         keywords = keywords.lower();
     except Exception as e:
@@ -355,6 +348,8 @@ def extract_washington_post_article(article, is_on_homepage, predifined_category
     
     if (article.category_id is None and 'washingtonpost.com/politics/' in article.url):
         article.category_id = 'politics'
+    if (article.category_id is None and 'news/post-politics' in article.url):
+        article.category_id = 'politics'
     elif (article.category_id is None and 'washingtonpost.com/sports/' in article.url):
         article.category_id = 'sport'
     elif (article.category_id is None and 'washingtonpost.com/world/' in article.url):
@@ -377,6 +372,10 @@ def extract_washington_post_article(article, is_on_homepage, predifined_category
         article.category_id = 'tech'
     elif (article.category_id is None and 'washingtonpost.com/news/parenting' in article.url):
         article.category_id = 'life'
+    elif (article.category_id is None and 'news/grade-point' in article.url):
+        article.category_id = 'education'
+    elif (article.category_id is None and 'local/education' in article.url):
+        article.category_id = 'education'
     elif (article.category_id is None and 'washingtonpost.com/news/soloish' in article.url):
         article.category_id = 'life'
     elif (article.category_id is None and 'washingtonpost.com/news/the-intersect' in article.url):
@@ -385,6 +384,8 @@ def extract_washington_post_article(article, is_on_homepage, predifined_category
         article.category_id = 'entertainment'
     elif (article.category_id is None and '/news/arts-and-entertainment' in article.url):
         article.category_id = 'entertainment'
+    elif (article.category_id is None and 'news/to-your-health' in article.url):
+        article.category_id = 'health'
     elif (article.category_id is None and predifined_category is 'education'):
         article.category_id = 'education'
     elif (article.category_id is None and ('.washingtonpost.com/national/' in article.url or 
@@ -407,6 +408,7 @@ def extract_washington_post_article(article, is_on_homepage, predifined_category
     # get content
     article.parse()
     if (keywords is None):
+        keywords = ""
         article.nlp()
         for key in article.keywords:
             keywords = keywords + key + ","
@@ -435,50 +437,50 @@ def extract_washington_post_article(article, is_on_homepage, predifined_category
              
              
              
-#              
-#               
-# print('...................................................\n' +
-#       '...................................................\n' + 
-#       '...................................................\n' +
-#       'start get articles from washington post' +
-#       '...................................................\n' +
-#       '...................................................\n'
-#       )
-# try:
-#     db_connect = IIIDatbaseConnection()
-#     db_connect.init_database_cont()     
-#                  
-#                  
-#                  
-#     ''' we process homepage'''
-#     for home_page in washington_post_home_pages:
-#         print("extracting: " + home_page)
-#         washington_page = requests.get(home_page)
-#         html_tree = html.fromstring(washington_page.text)
-#         article_urls = html_tree.xpath('//a/@href')
-#         for home_url in article_urls:
-#             if  home_url is not None and len(home_url) > 16: 
-#                 if ('http://' not in home_url and 'https://' not in home_url):
-#                     home_url = WASHINGTON_POST + home_url
-#                 try:
-#                     article_home = Article(home_url, keep_article_html=True)
-#                     extract_washington_post_article(article_home, True, washington_post_home_pages.get(home_page))
-#                 except Exception as e:
-#                     print('Smt wrong when process homepage' + home_page +  'article:  {}'.format(e) + home_url)
-#                  
-#                  
-#                  
-#                  
-#                  
-#                  
-#                  
-#                  
-#               
-#     db_connect.close_database_cont()   
-# except Exception as e:        
-#     print('Something went wrong with database: {}'.format(e))    
-#                  
-#               
+              
+               
+print('...................................................\n' +
+      '...................................................\n' + 
+      '...................................................\n' +
+      'start get articles from washington post' +
+      '...................................................\n' +
+      '...................................................\n'
+      )
+try:
+    db_connect = IIIDatbaseConnection()
+    db_connect.init_database_cont()     
+                  
+                  
+                  
+    ''' we process homepage'''
+    for home_page in washington_post_home_pages:
+        print("extracting: " + home_page)
+        washington_page = requests.get(home_page)
+        html_tree = html.fromstring(washington_page.text)
+        article_urls = html_tree.xpath('//a/@href')
+        for home_url in article_urls:
+            if  home_url is not None and len(home_url) > 16: 
+                if ('http://' not in home_url and 'https://' not in home_url):
+                    home_url = WASHINGTON_POST + home_url
+                try:
+                    article_home = Article(home_url, keep_article_html=True)
+                    extract_washington_post_article(article_home, True, washington_post_home_pages.get(home_page))
+                except Exception as e:
+                    print('Smt wrong when process homepage' + home_page +  'article:  {}'.format(e) + home_url)
+                  
+                  
+                  
+                  
+                  
+                  
+                  
+                  
+               
+    db_connect.close_database_cont()   
+except Exception as e:        
+    print('Something went wrong with database: {}'.format(e))    
+                  
+               
              
              
              
@@ -676,7 +678,7 @@ def extract_abcnews_article(article, is_on_homepage, predifined_category=None):
     
     #keywords
     try:
-        article.keywords = ""; 
+        article.keywords = None; 
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         article.keywords = keywords.lower();
     except Exception as e:
@@ -709,6 +711,12 @@ def extract_abcnews_article(article, is_on_homepage, predifined_category=None):
     article.source_name = "ABC NEWS"           
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
@@ -732,48 +740,48 @@ def extract_abcnews_article(article, is_on_homepage, predifined_category=None):
            
            
            
-#            
-#            
-# print('...................................................\n' +
-#       '...................................................\n' + 
-#       '...................................................\n' +
-#       'start get articles from abc news' +
-#       '...................................................\n' +
-#       '...................................................\n'
-#       )
-# try:
-#     db_connect = IIIDatbaseConnection()
-#     db_connect.init_database_cont()     
-#                
-#                
-#                
-#     ''' we process homepage'''
-#     for home_page in abc_home_pages:
-#         print("extracting: " + home_page)
-#         abc_page = requests.get(home_page)
-#         html_tree = html.fromstring(abc_page.text)
-#         article_urls = html_tree.xpath('//a/@href')
-#         for home_url in article_urls:
-#             if  home_url is not None and len(home_url) > 16: 
-#                 if ('http://' not in home_url and 'https://' not in home_url):
-#                     home_url = ABC_HOMEPAGE + home_url
-#                 try:
-#                     article_home = Article(home_url, keep_article_html=True)
-#                     extract_abcnews_article(article_home, True, abc_home_pages.get(home_page))
-#                 except Exception as e:
-#                     print('Smt wrong when process homepage ' + home_page +  ' article:  {}'.format(e) + home_url)
-#                
-#                
-#                
-#                
-#                
-#                
-#                
-#                
-#             
-#     db_connect.close_database_cont()   
-# except Exception as e:        
-#     print('Something went wrong with database: {}'.format(e))    
+            
+            
+print('...................................................\n' +
+      '...................................................\n' + 
+      '...................................................\n' +
+      'start get articles from abc news' +
+      '...................................................\n' +
+      '...................................................\n'
+      )
+try:
+    db_connect = IIIDatbaseConnection()
+    db_connect.init_database_cont()     
+                
+                
+                
+    ''' we process homepage'''
+    for home_page in abc_home_pages:
+        print("extracting: " + home_page)
+        abc_page = requests.get(home_page)
+        html_tree = html.fromstring(abc_page.text)
+        article_urls = html_tree.xpath('//a/@href')
+        for home_url in article_urls:
+            if  home_url is not None and len(home_url) > 16: 
+                if ('http://' not in home_url and 'https://' not in home_url):
+                    home_url = ABC_HOMEPAGE + home_url
+                try:
+                    article_home = Article(home_url, keep_article_html=True)
+                    extract_abcnews_article(article_home, True, abc_home_pages.get(home_page))
+                except Exception as e:
+                    print('Smt wrong when process homepage ' + home_page +  ' article:  {}'.format(e) + home_url)
+                
+                
+                
+                
+                
+                
+                
+                
+             
+    db_connect.close_database_cont()   
+except Exception as e:        
+    print('Something went wrong with database: {}'.format(e))    
                
             
            
@@ -822,6 +830,7 @@ def extract_abcnews_article(article, is_on_homepage, predifined_category=None):
 latimes_category = {'LOCAL' : 'news',
                 'Sports' : 'sport',
                 'ARTS & ENTERTAINMENT' : 'entertainment',
+                'ENTERTAINMENT' : 'entertainment',
                 'Entertainment' : 'entertainment',
                 'Business' : 'business',
                 'technology' : 'tech',
@@ -836,31 +845,36 @@ latimes_category = {'LOCAL' : 'news',
                 'Health & Fitness' : 'health',
                 'Books' : 'life',
                 'Travel' : 'travel',
+                'TRAVEL' : 'travel',
                 'Sports' : 'sport',
                 'BUSINESS': 'business',
-                'Science' : 'science'
+                'Science' : 'science',
+                'Politics' : 'politics'
                 }
        
            
 latimes_except = { }    
        
-latimes_home_pages = {'http://www.latimes.com/local/' : 'news',
+      
+    
+latimes_home_pages = {
+                      'http://www.latimes.com/local/' : 'news',
                   'http://www.latimes.com/local/california/' : 'news',
                   'http://www.latimes.com/sports/' : 'sport',
                   'http://www.latimes.com/entertainment/' : 'entertainment',
                   'http://www.latimes.com/business/technology/' : 'tech',
                   'http://www.latimes.com/business/' : 'business',
                   'http://www.latimes.com/opinion/' : 'opinions',
-                        
+                         
                   'http://www.latimes.com/nation/' : 'news',
                   'http://www.latimes.com/world/' : 'world',
                   'http://www.latimes.com/health/' : 'health',
                   'http://www.latimes.com/style/' : 'life',
                   'http://www.latimes.com/home/' : 'life',
-                  'http://www.latimes.com/food/' : 'life',
-                  'http://www.latimes.com/travel/' : 'travel',
+                  'http://www.latimes.com/food/' : 'life', 
+                  'http://www.latimes.com/travel/' : '/travel/',
                         
-                  'http://www.latimes.com/' : None,
+                'http://www.latimes.com/' : None,
                   }    
            
            
@@ -981,6 +995,7 @@ def extract_latimes_article(article, is_on_homepage, predifined_category=None):
     #keywords
     keywords = None
     try:
+        article.keywords = None
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         keywords = keywords.lower();
     except Exception as e:
@@ -991,6 +1006,7 @@ def extract_latimes_article(article, is_on_homepage, predifined_category=None):
     try:
         if category_id is None:
             category_id = html_tree.xpath('//div[@class="trb_allContentWrapper" ]')[0].attrib['data-content-section']
+            print(category_id)
     except Exception as e:
         print('Category not found again'.format(e))
     try:
@@ -998,7 +1014,6 @@ def extract_latimes_article(article, is_on_homepage, predifined_category=None):
             category_id = 'technology'
     except Exception as e:
         print('') 
-               
     if (category_id is not None and category_id in latimes_category):
         article.category_id = latimes_category.get(category_id)
     print(article.category_id)
@@ -1007,17 +1022,17 @@ def extract_latimes_article(article, is_on_homepage, predifined_category=None):
     if (article.published_time is None or article.title is None or article.category_id is None):
         raise Exception("missing fields")
            
-           
+       
            
     article.source_name = "Los Angeles Times"        
     # get content
     article.parse()
     if (keywords is None):
+        keywords = ""
         article.nlp()
         for key in article.keywords:
             keywords = keywords + key + ","
         keywords = keywords[0:-1]
-        
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)

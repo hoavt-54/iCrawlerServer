@@ -6,7 +6,7 @@ Created on 1 Feb, 2015
 from __future__ import print_function
 
 import pymysql
-import time
+import time, math
 
 from crawlerApp.utils import get_consine_text, normalize_text
 
@@ -160,15 +160,75 @@ class IIIDatbaseConnection:
     
         
     # method to update count
+    '''
+    There are 3 value of each article count
+    first---------- second -----------lasttime
+    before update the count, check to update these value correctly
+    '''
     def update_article_count(self, url, comment_count, share_count, like_count, 
                              facebook_plugin_id, twitter_count):
         cursor = self.cursor()
+        sql = "SELECT first_count, first_time_update, second_time_update, second_count, "\
+        " last_count, last_time_update, updated_time FROM articles where url = %s "
+        cursor.execute(sql, (url))
+        row = cursor.fetchone()
+        if (row is None):
+            return
+        first_time_update = row[1]
+        first_count = row[0]
+        second_time_update = row[2]
+        second_count = row[3]
+        last_count = row[4]
+        last_time_update = row[5]
+        updated_time = row[6]
+        current_time = int(time.time())
+        if (last_time_update is None or last_time_update == 0):
+            last_time_update = current_time
+            last_count = comment_count + share_count + like_count
+        elif ((first_time_update is None or first_time_update == 0) 
+              and current_time - updated_time > 3600):
+            first_time_update = last_time_update
+            first_count = last_count
+            last_time_update = current_time
+            last_count = comment_count + share_count + like_count
+        elif ((second_time_update is None or second_time_update == 0) 
+              and current_time - updated_time > 8000):
+            second_time_update = last_time_update
+            second_count = last_count
+            last_time_update = current_time
+            last_count = comment_count + share_count + like_count
+        else:
+            last_time_update = current_time
+            last_count = comment_count + share_count + like_count
+        
+        if (first_time_update is not None and first_time_update > 0 
+                and second_time_update is not None and second_time_update > 0):
+            print("first_time_update - second_time_update - last_time_update" )
+            print(str(first_time_update) + " - " + str(second_time_update) + " - " + str(last_time_update))
+            first = first_count/(first_time_update - updated_time)
+            second = second_count/(second_time_update - first_time_update)
+            last = last_count / (last_time_update - second_time_update)
+            print("first - second - last")
+            print(str(first) + " - " + str(second) + " - " + str(last))
+            m = (first + second + last)/3
+            S = (math.pow(first -m, 2) + math.pow(second -m, 2) + math.pow(last -m, 2))/3
+            d = math.sqrt(S)
+            z_score = (last - m)/d
+            print("m - S - d - z_score")
+            print(str(m) + " - " + str(S) + " - " + str(d) + " - " + str(z_score))
+            sql = "UPDATE articles SET z_score = %s where url = %s"
+            cursor.execute(sql, (z_score, url))
+            
         sql = "UPDATE articles SET comment_count = %s, share_count = %s, like_count = %s, "\
-        "facebook_plugin_id = %s , twitter_count = %s, last_update_statistic = %s where url = %s"
-        result = cursor.execute(sql, (comment_count, share_count, like_count, facebook_plugin_id,
-                                       twitter_count, int(time.time()), url))
+        "facebook_plugin_id = %s , twitter_count = %s, last_time_update = %s where url = %s"
+        cursor.execute(sql, (comment_count, share_count, like_count, facebook_plugin_id,
+                                       twitter_count, last_time_update, url))
+        sql = "UPDATE articles SET first_count = %s, first_time_update = %s, second_time_update = %s, "\
+        "second_count = %s , last_count = %s, last_time_update = %s where url = %s"
+        result = cursor.execute(sql, (first_count, first_time_update, second_time_update, second_count,
+                                       last_count, last_time_update, url))
         self.db_connection.commit()
-        cursor.close()
+        cursor.close() 
         return result
         
     # method to update share_count
@@ -349,7 +409,23 @@ class IIIDatbaseConnection:
         self.db_connection.commit()
         cursor.close()
         return result
-        
+    #method
+    def should_update_statisics (self, url):
+        cursor = self.cursor()
+        sql = "SELECT last_time_update, updated_time FROM articles where url = %s "
+        cursor.execute(sql, (url))
+        row = cursor.fetchone()
+        # article've not been update share count for 15 minuntes
+        # and publish in last 36 hour
+        try:
+            if (row is not None and (row[0] is None or time.time() - row[0] > 1200) 
+                                and time.time() - row[1] < 129600):
+                return True
+            else:
+                return False
+        except BaseException as e:
+            print("error .{}".format(e))
+            return False
     #method to check whether url is existed or not
     def is_url_existed (self, url):
         cursor = self.cursor()
@@ -360,6 +436,9 @@ class IIIDatbaseConnection:
             return row[1]
         else:
             return -1
-        
-        
+# url = "http://edition.cnn.com/2015/12/11/asia/new-zealand-flag-ref-vote/index.html"
+# db_thread = IIIDatbaseConnection()
+# db_thread.init_database_cont()
+# #print (db_thread.should_update_statisics (url))
+# db_thread.update_article_count(url, 5, 2, 4, 123443, 0)
         

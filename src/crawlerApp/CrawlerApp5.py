@@ -309,7 +309,7 @@ def extract_huffington_article(article, is_on_homepage, predifined_category=None
     
     #keywords
     try:
-        article.keywords = ""; 
+        article.keywords = None; 
         keywords = html_tree.xpath('//meta[@property="keywords"]')[0].attrib['content']
         article.keywords = keywords.lower();
     except Exception as e:
@@ -341,6 +341,12 @@ def extract_huffington_article(article, is_on_homepage, predifined_category=None
     article.source_name = "THE HUFFINGTON POST"               
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
@@ -585,7 +591,7 @@ def extract_newyorktime_article(article, is_on_homepage, predifined_category=Non
     
     #keywords
     try:
-        article.keywords = ""; 
+        article.keywords = None; 
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         article.keywords = keywords.lower();
     except Exception as e:
@@ -622,6 +628,12 @@ def extract_newyorktime_article(article, is_on_homepage, predifined_category=Non
     article.source_name = "THE NEW YORK TIMES"             
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
@@ -1169,7 +1181,7 @@ def extract_mashable_article(article, is_on_homepage, predifined_category=None):
     
     #keywords
     try:
-        article.keywords = ""; 
+        article.keywords = None; 
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         article.keywords = keywords.lower();
     except Exception as e:
@@ -1199,6 +1211,12 @@ def extract_mashable_article(article, is_on_homepage, predifined_category=None):
     article.source_name = "MASHABLE.COM"         
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)

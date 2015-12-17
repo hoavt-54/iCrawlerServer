@@ -24,8 +24,8 @@ import requests
 from threading import Thread
 from threading import Thread
 
-from crawlerApp.SocialStatisticGetter import CommentLikeShrareGetterThread, \
-    POISON
+from crawlerApp.PostAndGetFromFbPages import CommentLikeShrareGetterThread, \
+    POISON, PostToFacebookPage
 from crawlerApp.utils import normalize_url
 from crawlerApp.utils import normalize_url, hasNumbers, convert_vn_date
 from iiidatabase.DatabaseConnectionLib import IIIDatbaseConnection

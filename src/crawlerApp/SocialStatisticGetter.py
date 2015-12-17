@@ -22,8 +22,9 @@ from iiidatabase.DatabaseConnectionLib import IIIDatbaseConnection
 FB_REST_API = 'http://api.facebook.com/restserver.php'
 TWITTER_URL_API = 'http://urls.api.twitter.com/1/urls/count.json'
 POISON = "quite_queue"
-UPDATE_COUNT_PERIOD = 5*60;
+UPDATE_COUNT_PERIOD = 10*60;
 DELETE_PERIOD = 4 * 24 * 60 * 60
+AGE_GET_UPDATE = 2 * 24 * 60 * 60
 '''=========================================================================
 Thread waiting to get comment like and share for url, then save result in db
 ==========================================================================='''
@@ -38,13 +39,11 @@ class StatisticGetterThread(Thread):
         self.is_running = False
     
     def run(self):
-        
         try:
             ''' get list of existing url from db here'''
             running_time = 0
             while self.is_running:
                 try:
-                    
                     running_time = running_time + 1
                     print("======================= Running time" + str(running_time) + "   ==============================")
                     all_urls = {}
@@ -52,7 +51,11 @@ class StatisticGetterThread(Thread):
                         load_db_cont = IIIDatbaseConnection()
                         load_db_cont.init_database_cont()
                         cur = load_db_cont.cursor()
-                        cur.execute("SELECT id, url, updated_time FROM articles WHERE is_duplicated = 0 AND UNIX_TIMESTAMP() - last_update_statistic > " + str(40 * 60))
+                        query = "SELECT id, url, updated_time, UNIX_TIMESTAMP() - updated_time FROM articles "\
+                                    "WHERE (UNIX_TIMESTAMP() - last_time_update) > " + str(25 * 60) \
+                                    + " AND UNIX_TIMESTAMP() - updated_time < " +str(AGE_GET_UPDATE) 
+                        print(query)
+                        cur.execute(query)
                         all_urls = cur.fetchall()
                     except Exception as e:
                         print("Cannot read database {}".format(e))
@@ -64,6 +67,8 @@ class StatisticGetterThread(Thread):
                             pass
                         
                     print(len(all_urls))
+                    round_count = 0
+                    urlparams = ""
                     for r in all_urls:
                         if (self.is_running):
                             try:
@@ -81,38 +86,34 @@ class StatisticGetterThread(Thread):
                                         except Exception as e:
                                             pass
                                     continue
-                                fb_param = dict(method = 'links.getStats',
-                                            urls = urllib.parse.quote(next_url, safe=''),
-                                            format = 'json')
-                                tw_param = dict(url=next_url)
-                                fb_resp = requests.get(url=FB_REST_API, params = fb_param)
-                                print(fb_resp.text)
-                                data = json.loads(fb_resp.text)[0]
-                                # from twitter
-                                '''tw_resp = None
-                                tw_share = 0
-                                try:
-                                    tw_resp = requests.get(url=TWITTER_URL_API, params = tw_param)
-                                except Exception as db_e:
-                                    print("Error when get Twitter {}".format(db_e))
-                                if(tw_resp is not None):
-                                    twi_data = json.loads(tw_resp.text)
-                                    tw_share = twi_data['count']
-                                print(data)
-                                print(twi_data)'''
-                                try:
-                                    save_cont = IIIDatbaseConnection()
-                                    save_cont.init_database_cont()
-                                    print(save_cont.update_article_count(next_url, data['comment_count'],
-                                                                     data['share_count'], data['like_count'], data['comments_fbid'], 0))
-                                except Exception as e:
-                                    print("Error when update count for article: {}".format(e))   
-                                finally:
-                                    try:
-                                        save_cont.close_database_cont()
-                                    except Exception as e:
-                                        pass
+                                if (int(time.time()) - int(r[2]) > AGE_GET_UPDATE):
+                                    print("do not need to update this")
+                                    continue
+                                round_count = round_count + 1
+                                
+                                urlparams += urllib.parse.quote(next_url, safe='') +","
+                                if (round_count == 10) :
+                                    round_count = 0# reset count
+                                    fb_param = dict(method = 'links.getStats',
+                                                urls = urlparams, format = 'json')
+                                    fb_resp = requests.get(url=FB_REST_API, params = fb_param)
+                                    #print(fb_resp.text)
+                                    for data in json.loads(fb_resp.text):
+                                        try:
+                                            save_cont = IIIDatbaseConnection()
+                                            save_cont.init_database_cont()
+                                            print(save_cont.update_article_count(urllib.parse.unquote(data['url']), data['comment_count'],
+                                                                             data['share_count'], data['like_count'], data['comments_fbid'], 0))
+                                        except Exception as e:
+                                            print("Error when update count for article: {}".format(e))   
+                                        finally:
+                                            try:
+                                                save_cont.close_database_cont()
+                                            except Exception as e:
+                                                pass
+                                    urlparams = ""
                             except Exception as e:
+                                urlparams = ""
                                 print("Error when get FB, TW like comment: {}".format(e))
                     all_urls = None
                 except Exception as db_e:
@@ -208,6 +209,9 @@ def get_api(access_token, page_id):
 def get_api_pagetoken (self, page_access_token):
     return facebook.GraphAPI(page_access_token)
 
+def get_page_api(access_token, page_id):
+    graph = facebook.GraphAPI(access_token)
+    return graph
 
 
 
@@ -215,8 +219,7 @@ def get_api_pagetoken (self, page_access_token):
 
 
 
-
-
+TOKEN = "CAAHZB5aAcsPcBAEt7M2MjuwYP1TZAWSykyCUr2pr8yCz0HMOUrEdupwOEUFCrZCty8rKwJZCqxcQD18dkG3rOYzkyLtxT1WqLoso1KWsEAsv3IcQfpImFKZC4QCowQBMQGC1XphZA2bxNUh6agxMaGiRTU4mSOEM2HiodncvfcfYcnHyT9WDBZB3o9HLdnt0b8ZD"
 class GetFacebookPostForUrl(Thread):
     
     # define a constructor, parameterised a queue
@@ -241,14 +244,15 @@ class GetFacebookPostForUrl(Thread):
             
             while self.is_running:
                 try:
-                    if (int(time.time()) - self.LAST_TIME_GET_TOKEN > TOKEN_TIMEOUT):
+                    '''if (int(time.time()) - self.LAST_TIME_GET_TOKEN > TOKEN_TIMEOUT):
                         with open ("../../fb_token.txt", "r") as myfile:
                             self.FB_LONGLIVE_ACTK =myfile.read().replace('\n', '')
                             self.LAST_TIME_GET_TOKEN = int(time.time())
-                            print("refreshed Facebook token")
+                            print("refreshed Facebook token")'''
                     for source_id in sources_page_id:
                         print("=============== sourceid: " + source_id + "   ===============")
-                        api = get_api(self.FB_LONGLIVE_ACTK, '657808134330750')
+                        api = get_page_api(TOKEN, '1661911627411850')
+                        print("get post on each source")
                         posts = api.get_object(id=source_id +'/posts')
                         #print(posts['data'])
                         for post in posts['data']:

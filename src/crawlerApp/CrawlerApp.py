@@ -260,7 +260,8 @@ def extract_cnn_article (article, is_on_homepage, predifined_category=None):
     # when no exception, we insert to database
     article.id = db_connect.insert_article3(normalized_url, article.title, cnn_source_id, article.category_id, 
                                      False, is_on_homepage, article.published_time, article.thumbnail_url, 
-                                     article.short_description, USA, text_html, text, normalized_title, keywords)
+                                     article.short_description, USA, text_html, 
+                                     text, normalized_title, keywords)
     
     # after insert to database, we put this url to get share, comment, like
     url_sharelikecomment_queue.put(normalized_url, True)
@@ -302,7 +303,7 @@ try:
     db_connect.init_database_cont()
     print('Reading CNN source ...')
                          
-                    
+                     
     ''' we process homepage sport'''
     for cnn_home in cnn_homepages:
         print("Extracting:  " + cnn_home)
@@ -316,15 +317,15 @@ try:
                         home_url = cnn_home + home_url
                     else:
                         home_url = CNN_HOMPAGE_ROOT + home_url
-                          
+                           
                 try:
                     article_home = Article(home_url, keep_article_html=True)
                     extract_cnn_article(article_home, True, cnn_homepages.get(cnn_home))
                 except Exception as e:
                     print('Smt wrong when process homepage cnn  article:  {}'.format(e) + home_url)
-                          
                            
-           
+                            
+            
                                  
     db_connect.close_database_cont()   
 except Exception as e:        
@@ -375,7 +376,7 @@ def extract_usatoday_article(article, is_on_homepage, predifined_category=None):
         url_sharelikecomment_queue.put(article.url, True)
         return
     normalized_url = normalize_url(article.url)
-    if ('usatoday.com' not in normalized_url):
+    if ('usatoday.com' not in normalized_url or not hasNumbers(normalized_url)):
         return
     if (normalized_url in usatoday_execept or normalized_url + '/' in usatoday_execept):
         return
@@ -524,7 +525,7 @@ def extract_usatoday_article(article, is_on_homepage, predifined_category=None):
     
     #keywords
     try:
-        article.keywords = ""; 
+        article.keywords = None; 
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         article.keywords = keywords.lower();
     except Exception as e:
@@ -533,7 +534,13 @@ def extract_usatoday_article(article, is_on_homepage, predifined_category=None):
                       
     if (article.published_time is None or article.title is None or article.category_id is None):
         raise Exception("")
-    article.parse()               
+    article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]       
     text_html = true_html.escape(article.article_html, True)
     text = normalize_text(article.text)
     normalized_title = normalize_text_nostop(article.title)
@@ -560,9 +567,9 @@ def extract_usatoday_article(article, is_on_homepage, predifined_category=None):
                   
                    
                    
-                   
-                   
-                   
+                    
+                    
+                    
 print('...................................................\n' +
       '...................................................\n' + 
       '...................................................\n' +
@@ -573,10 +580,10 @@ print('...................................................\n' +
 try:
     db_connect = IIIDatbaseConnection()
     db_connect.init_database_cont()
-                       
-                       
-                   
-                       
+                        
+                        
+                    
+                        
     ''' we process homepage sport'''
     USA_TODAY_HOMPAGE_SPORT = 'http://www.usatoday.com/sports/'
     usatoday_homepage_sport = requests.get(USA_TODAY_HOMPAGE_SPORT)
@@ -591,10 +598,10 @@ try:
                 extract_usatoday_article(article_home, True, usatoday_category.get('sports'))
             except Exception as e:
                 print('Smt wrong when process homepage sport  article:  {}'.format(e) + home_url)
-                         
-                   
-                       
-                       
+                          
+                    
+                        
+                        
     ''' we process homepage life'''
     USA_TODAY_HOMPAGE_LIFE= 'http://www.usatoday.com/life/'
     usatoday_homepage_life = requests.get(USA_TODAY_HOMPAGE_LIFE)
@@ -609,11 +616,11 @@ try:
                 extract_usatoday_article(article_home, True, usatoday_category.get('life'))
             except Exception as e:
                 print('Smt wrong when process homepage life  article:  {}'.format(e) + home_url)
-                   
-                   
-                   
-                   
                     
+                    
+                    
+                    
+                     
     ''' we process homepage money'''
     USA_TODAY_HOMPAGE_MONEY =  'http://www.usatoday.com/money/'
     usatoday_homepage_money= requests.get(USA_TODAY_HOMPAGE_MONEY)
@@ -628,13 +635,13 @@ try:
                 extract_usatoday_article(article_home, True, usatoday_category.get('money'))
             except Exception as e:
                 print('Smt wrong when process homepage money  article:  {}'.format(e) + home_url)
-                   
-                   
-                   
-                   
-                   
-                   
-                   
+                    
+                    
+                    
+                    
+                    
+                    
+                    
     ''' we process homepage tech'''
     USA_TODAY_HOMPAGE_TECH =  'http://www.usatoday.com/tech/'
     usatoday_homepage_tech= requests.get(USA_TODAY_HOMPAGE_TECH)
@@ -649,11 +656,11 @@ try:
                 extract_usatoday_article(article_home, True, usatoday_category.get('tech'))
             except Exception as e:
                 print('Smt wrong when process homepage tech  article:  {}'.format(e) + home_url)
-                   
-                   
-                   
-                   
-                   
+                    
+                    
+                    
+                    
+                    
     ''' we process homepage travel'''
     USA_TODAY_HOMPAGE_TRAVEL=  'http://www.usatoday.com/travel/'
     usatoday_homepage_travel= requests.get(USA_TODAY_HOMPAGE_TRAVEL)
@@ -668,13 +675,13 @@ try:
                 extract_usatoday_article(article_home, True, usatoday_category.get('travel'))
             except Exception as e:
                 print('Smt wrong when process homepage travel  article:  {}'.format(e) + home_url)
-                   
-                   
-                   
-                   
-                       
-                       
-                       
+                    
+                    
+                    
+                    
+                        
+                        
+                        
     ''' we process homepage opinion'''
     USA_TODAY_HOMPAGE_OPINION=  'http://www.usatoday.com/opinion/'
     usatoday_homepage_opinion= requests.get(USA_TODAY_HOMPAGE_OPINION)
@@ -689,13 +696,13 @@ try:
                 extract_usatoday_article(article_home, True, usatoday_category.get('opinion'))
             except Exception as e:
                 print('Smt wrong when process homepage opinion  article:  {}'.format(e) + home_url)
-                   
-                       
-                       
-                       
-                       
-                       
-                       
+                    
+                        
+                        
+                        
+                        
+                        
+                        
     '''
     we process homepage here, to find out what has been showed in homepage
     '''         
@@ -710,17 +717,17 @@ try:
             extract_usatoday_article(article_home, True)
         except Exception as e:
             print('Smt wrong when process homepage article:  {}'.format(e) + home_url)
+                         
+                         
                         
                         
-                       
-                       
-                       
-                       
+                        
+                        
     db_connect.close_database_cont()   
 except Exception as e:        
     print('Something went wrong with database: {}'.format(e))
-                       
-                       
+                        
+                        
     '''
     =======================================================================================================================================
     =======================================================================================================================================
@@ -728,9 +735,9 @@ except Exception as e:
     =======================================================================================================================================
     =======================================================================================================================================
     '''
+                    
                    
-                  
-           
+            
      
      
     
@@ -910,7 +917,7 @@ def extract_people_article(article, is_on_homepage, predifined_category=None):
     
     #keywords
     try:
-        article.keywords = ""; 
+        article.keywords = None; 
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         article.keywords = keywords.lower();
     except Exception as e:
@@ -938,6 +945,12 @@ def extract_people_article(article, is_on_homepage, predifined_category=None):
     article.source_name = "PEOPLE.COM"          
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
@@ -961,8 +974,8 @@ def extract_people_article(article, is_on_homepage, predifined_category=None):
           
           
           
-           
-           
+            
+            
 print('...................................................\n' +
       '...................................................\n' + 
       '...................................................\n' +
@@ -973,9 +986,9 @@ print('...................................................\n' +
 try:
     db_connect = IIIDatbaseConnection()
     db_connect.init_database_cont()     
-               
-               
-               
+                
+                
+                
     ''' we process homepage'''
     for home_page in people_home_pages:
         print("extracting: " + home_page)
@@ -991,21 +1004,21 @@ try:
                     extract_people_article(article_home, True, None)
                 except Exception as e:
                     print('Smt wrong when process homepage ' + home_page +  ' article:  {}'.format(e) + home_url)
-               
-               
-               
-               
-               
-               
-               
-               
-            
+                
+                
+                
+                
+                
+                
+                
+                
+             
     db_connect.close_database_cont()   
 except Exception as e:        
     print('Something went wrong with database: {}'.format(e))    
-               
-            
-          
+                
+             
+           
           
           
 '''
@@ -1165,6 +1178,7 @@ def extract_forbes_article(article, is_on_homepage, predifined_category=None):
     
     #keywords
     try:
+        article.keywords = None
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         article.keywords = keywords.lower();
     except Exception as e:
@@ -1236,6 +1250,12 @@ def extract_forbes_article(article, is_on_homepage, predifined_category=None):
     article.source_name = "FORBES.COM"    
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
@@ -1258,9 +1278,9 @@ def extract_forbes_article(article, is_on_homepage, predifined_category=None):
          
         
         
-         
-         
-         
+          
+          
+          
 print('...................................................\n' +
       '...................................................\n' + 
       '...................................................\n' +
@@ -1271,9 +1291,9 @@ print('...................................................\n' +
 try:
     db_connect = IIIDatbaseConnection()
     db_connect.init_database_cont()     
-             
-             
-             
+              
+              
+              
     ''' we process homepage'''
     for home_page in forbes_home_pages:
         print("extracting: " + home_page)
@@ -1289,23 +1309,23 @@ try:
                     extract_forbes_article(article_home, True, forbes_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage ' + home_page +  ' article:  {}'.format(e) + home_url)
-             
-             
-             
-             
-             
-             
-             
-             
-          
+              
+              
+              
+              
+              
+              
+              
+              
+           
     db_connect.close_database_cont()   
 except Exception as e:        
     print('Something went wrong with database: {}'.format(e))    
-             
+              
+           
+          
           
          
-         
-        
 '''
 =======================================================================================================================================
 =======================================================================================================================================
@@ -1313,11 +1333,11 @@ except Exception as e:
 =======================================================================================================================================
 =======================================================================================================================================
 ''' 
-       
-       
-       
-     
-     
+        
+        
+        
+      
+      
      
      
      
@@ -1393,6 +1413,7 @@ def extract_uproxx_article(article, is_on_homepage, predifined_category=None):
             
     #keywords
     try:
+        article.keywords = None
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         article.keywords = keywords.lower();
     except Exception as e:
@@ -1423,6 +1444,12 @@ def extract_uproxx_article(article, is_on_homepage, predifined_category=None):
     article.source_name = "UPROXX.COM"          
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
@@ -1433,7 +1460,8 @@ def extract_uproxx_article(article, is_on_homepage, predifined_category=None):
     try:
         article.id = db_connect.insert_article3(normalized_url, article.title, uproxx_source_id, 
                                      article.category_id, False, is_on_homepage, article.published_time,
-                                     article.thumbnail_url, article.short_description, USA, text_html, text, normalized_title, article.keywords)
+                                     article.thumbnail_url, article.short_description, USA, 
+                                     text_html, text, normalized_title, article.keywords)
     except Exception as dbE:
         print("Error when insert article to db. {}".format(dbE))
     # after insert to database, we put this url to get share, comment, like
@@ -1445,8 +1473,8 @@ def extract_uproxx_article(article, is_on_homepage, predifined_category=None):
    
    
     
-    
-    
+     
+     
 print('...................................................\n' +
       '...................................................\n' + 
       '...................................................\n' +
@@ -1457,9 +1485,9 @@ print('...................................................\n' +
 try:
     db_connect = IIIDatbaseConnection()
     db_connect.init_database_cont()     
-            
-            
-            
+             
+             
+             
     ''' we process homepage only'''
     page = requests.get(UPROXX_HOME)
     html_tree = html.fromstring(page.text)
@@ -1473,28 +1501,28 @@ try:
                 extract_uproxx_article(article_home, True, None)
             except Exception as e:
                 print('Smt wrong when process homepage UPROXX article:  {}'.format(e) + home_url)
-            
-            
-            
-            
-            
-            
-            
-            
-         
+             
+             
+             
+             
+             
+             
+             
+             
+          
     db_connect.close_database_cont()   
 except Exception as e:        
     print('Something went wrong with database: {}'.format(e))    
-    
-    
-    
-   
-   
+     
      
      
     
     
-    
+      
+      
+     
+     
+     
     
     
     
@@ -1651,7 +1679,7 @@ def extract_iflscience_article(article, is_on_homepage, predifined_category=None
     
     #get keywords
     try:
-        article.keywords = ""
+        article.keywords = None
         for tag in html_tree.xpath('//ul[@class="field-tags"]/li/a[@typeof="skos:Concept"]/text()'):
             article.keywords = article.keywords + tag + "," 
         article.keywords = article.keywords[:-1].lower()
@@ -1667,6 +1695,12 @@ def extract_iflscience_article(article, is_on_homepage, predifined_category=None
     article.source_name = "IFLScience.COM"           
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
@@ -1701,9 +1735,9 @@ def extract_iflscience_article(article, is_on_homepage, predifined_category=None
                 
                 
                 
-                
-                
-             
+                 
+                 
+              
 print('...................................................\n' +
       '...................................................\n' + 
       '...................................................\n' +
@@ -1714,9 +1748,9 @@ print('...................................................\n' +
 try:
     db_connect = IIIDatbaseConnection()
     db_connect.init_database_cont()     
-                
-                
-                
+                 
+                 
+                 
     ''' we process homepage'''
     for home_page in IfloveScience_home_pages:
         print("extracting: " + home_page)
@@ -1732,21 +1766,21 @@ try:
                     extract_iflscience_article(article_home, True, IfloveScience_home_pages.get(home_page))
                 except Exception as e:
                     print('Smt wrong when process homepage' + home_page +  'article:  {}'.format(e) + home_url)
-                
-                
-                
-                
-                
-                
-                
-                
-             
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+              
     db_connect.close_database_cont()   
 except Exception as e:        
     print('Something went wrong with database: {}'.format(e))    
-                
-                
-           
+                 
+                 
+            
 '''
 =======================================================================================================================================
 =======================================================================================================================================
@@ -1951,6 +1985,7 @@ def extract_newyorkdaily_article(article, is_on_homepage, predifined_category=No
     
     #keywords
     try:
+        article.keywords = None
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         article.keywords = keywords.lower();
     except Exception as e:
@@ -1984,6 +2019,12 @@ def extract_newyorkdaily_article(article, is_on_homepage, predifined_category=No
     article.source_name = "NY DAILY NEWS"           
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)

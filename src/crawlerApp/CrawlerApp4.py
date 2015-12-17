@@ -602,7 +602,7 @@ def extract_eonline_article(article, is_on_homepage, predifined_category=None):
           
     #keywords
     try:
-        article.keywords = ""; 
+        article.keywords = None
         keywords = html_tree.xpath('//meta[@name="news_keywords"]')[0].attrib['content']
         article.keywords = keywords.lower();
     except Exception as e:
@@ -621,6 +621,12 @@ def extract_eonline_article(article, is_on_homepage, predifined_category=None):
     article.source_name = "EONLINE.COM"        
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title) 
@@ -860,7 +866,7 @@ def extract_techcrunch_article(article, is_on_homepage, predifined_category=None
     
     #keywords
     try:
-        article.keywords = "";
+        article.keywords = None
         keywords = html_tree.xpath('//meta[@name="sailthru.tags"]')[0].attrib['content']
         article.keywords = keywords.lower();
     except Exception as e:
@@ -880,6 +886,12 @@ def extract_techcrunch_article(article, is_on_homepage, predifined_category=None
     article.source_name = "TECHCRUNCH"     
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
@@ -1127,7 +1139,7 @@ def extract_bleacher_article(article, is_on_homepage, predifined_category=None):
          
     #keywords
     try:
-        article.keywords = ""; 
+        article.keywords = None
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         article.keywords = keywords.lower();
     except Exception as e:
@@ -1146,6 +1158,12 @@ def extract_bleacher_article(article, is_on_homepage, predifined_category=None):
     article.source_name = "BLEACHER REPORT"    
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
@@ -1388,7 +1406,7 @@ def extract_vogue_article(article, is_on_homepage, predifined_category=None):
     
     #keywords
     try:
-        article.keywords = ""; 
+        article.keywords = None
         keywords = html_tree.xpath('//meta[@name="news_keywords"]')[0].attrib['content']
         article.keywords = keywords.lower();
     except Exception as e:
@@ -1407,6 +1425,12 @@ def extract_vogue_article(article, is_on_homepage, predifined_category=None):
     article.source_name = "VOGUE"      
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
@@ -1690,7 +1714,7 @@ def extract_cbsnews_article(article, is_on_homepage, predifined_category=None):
             
     #keywords
     try:
-        article.keywords = ""; 
+        article.keywords = None
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         article.keywords = keywords.lower();
     except Exception as e:
@@ -1724,6 +1748,12 @@ def extract_cbsnews_article(article, is_on_homepage, predifined_category=None):
     article.source_name = "CBS NEWS"       
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
@@ -1971,7 +2001,7 @@ def extract_theblaze_article(article, is_on_homepage, predifined_category=None):
     
     #keywords
     try:
-        article.keywords = ""; 
+        article.keywords = None
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         article.keywords = keywords.lower();
     except Exception as e:
@@ -1997,6 +2027,12 @@ def extract_theblaze_article(article, is_on_homepage, predifined_category=None):
     article.source_name = "THE BLAZE"         
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
@@ -2196,6 +2232,7 @@ def extract_reutersnews_article(article, is_on_homepage, predifined_category=Non
     article.title = None
     article.source_id = None
     article.id = None
+    article.keywords = None
               
                
     time_string = None
@@ -2295,6 +2332,12 @@ def extract_reutersnews_article(article, is_on_homepage, predifined_category=Non
     article.source_name = "REUTERS"          
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)

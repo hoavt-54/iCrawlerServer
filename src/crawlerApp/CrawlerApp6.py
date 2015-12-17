@@ -109,6 +109,7 @@ cnbc_category = {'US: News' : 'news',
                 'Tech Drivers' : 'tech',
                 'Tech Transformers' : 'tech',
                 'Natural Disasters' : 'science',
+                'Sustainable Energy' : 'science',
                 'Sports' : 'sport',
                 'Lawsuits' : 'news',
                 'Weather' : 'news',
@@ -119,7 +120,11 @@ cnbc_category = {'US: News' : 'news',
                 'Airlines' : 'news',
                 'Autos' : 'news',
                 'Catalog Retail' : 'business',
+                'Fast Money' : 'business',
+                'The Big Crunch' : 'business',
+                'Retail' : 'business',
                 'US Economy' : 'business',
+                'Economy' : 'business',
                 'Utilities' : 'news',
                 'Energy' : 'business',
                 'Wealth' : 'business',
@@ -146,6 +151,7 @@ cnbc_category = {'US: News' : 'news',
                 'Career' : 'life',
                 'College' : 'education',
                 'Life' : 'life',
+                'Jobs' : 'business',
                 'small business week' : 'business',
                 'Small Business' : 'business',
                 'Road to Iconic' : 'business',
@@ -175,7 +181,8 @@ cnbc_category = {'US: News' : 'news',
                 'first-read' : 'politics',
                 'nightly-news' : 'news',
                 'Start-ups' : 'business',
-                'World Economy' : 'world'
+                'World Economy' : 'world',
+                'Guns and Weapons' : 'news'
                 }
            
                
@@ -309,7 +316,7 @@ def extract_cnbcnews_article(article, is_on_homepage, predifined_category=None):
     
     #keywords
     try:
-        article.keywords = ""; 
+        article.keywords = None; 
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         article.keywords = keywords.lower();
         print(article.keywords)
@@ -340,6 +347,12 @@ def extract_cnbcnews_article(article, is_on_homepage, predifined_category=None):
     article.source_name = "CNBC"          
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
@@ -577,7 +590,7 @@ def extract_mailonline_article(article, is_on_homepage, predifined_category=None
     
     #keywords
     try:
-        article.keywords = ""; 
+        article.keywords = None; 
         keywords = html_tree.xpath('//meta[@name="keywords"]')[0].attrib['content']
         article.keywords = keywords.lower();
     except Exception as e:
@@ -606,6 +619,12 @@ def extract_mailonline_article(article, is_on_homepage, predifined_category=None
                        
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
@@ -822,7 +841,7 @@ def extract_politico_article(article, is_on_homepage, predifined_category=None):
     
     #keywords
     try:
-        article.keywords = ""; 
+        article.keywords = None; 
         keywords = "";
         for word in html_tree.xpath('//aside[@class="content-categories"]/ul/li/a[@target="_top"]/text()'):
             keywords = keywords + word +","
@@ -846,6 +865,12 @@ def extract_politico_article(article, is_on_homepage, predifined_category=None):
                         
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)
@@ -1309,7 +1334,7 @@ def extract_fivethirtyeight_article(article, is_on_homepage, predifined_category
                
     #keywords
     try:
-        article.keywords = ""; 
+        article.keywords = None; 
         keywords = html_tree.xpath('//meta[@name="news_keywords"]')[0].attrib['content']
         article.keywords = keywords.lower()
     except Exception as e:
@@ -1329,6 +1354,12 @@ def extract_fivethirtyeight_article(article, is_on_homepage, predifined_category
                        
     # get content
     article.parse()
+    if (article.keywords is None):
+        keywords = ""
+        article.nlp()
+        for key in article.keywords:
+            keywords = keywords + key + ","
+        article.keywords = keywords[0:-1]
     text = normalize_text(article.text)
     text_html = true_html.escape(article.article_html, True)
     normalized_title = normalize_text_nostop(article.title)

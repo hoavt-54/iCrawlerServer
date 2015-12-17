@@ -50,6 +50,8 @@ class CommentLikeShrareGetterThread(Thread):
                     if (next_url == None or next_url == POISON):
                         self.stop_running()
                         break
+                    if (not db_thread.should_update_statisics(next_url)):
+                        continue
                     param_url = next_url
                     if ("http://espn.go.com/" in next_url):
                         try:
@@ -60,6 +62,7 @@ class CommentLikeShrareGetterThread(Thread):
                     fb_param = dict(method = 'links.getStats',
                                 urls = urllib.parse.quote(param_url, safe=''),
                                 format = 'json')
+                    
                     #tw_param = dict(url=next_url)
                     fb_resp = requests.get(url=FB_REST_API, params = fb_param)
                     data = json.loads(fb_resp.text)[0]
@@ -235,8 +238,6 @@ class PostToFacebookPage(Thread):
                     try:
                         count = count + 1
                         tk_index= count % len(self.tokens)
-                        #print("page_id_position: ")
-                        #print(tk_index)
                         api = facebook.GraphAPI(self.tokens[tk_index])
                         result_photo =  api.put_photo_url_2_page(next_article.short_description, next_article.thumbnail_url, profile_id="me", published=False)
                         post = api.get_object(id=result_photo['id'], fields="images")
