@@ -186,7 +186,7 @@ class IIIDatbaseConnection:
             last_time_update = current_time
             last_count = comment_count + share_count + like_count
         elif ((first_time_update is None or first_time_update == 0) 
-              and current_time - updated_time > 3600):
+              and current_time - updated_time > 4000):
             first_time_update = last_time_update
             first_count = last_count
             last_time_update = current_time
@@ -203,21 +203,22 @@ class IIIDatbaseConnection:
         
         if (first_time_update is not None and first_time_update > 0 
                 and second_time_update is not None and second_time_update > 0):
-            print("first_time_update - second_time_update - last_time_update" )
-            print(str(first_time_update) + " - " + str(second_time_update) + " - " + str(last_time_update))
+            #print("first_time_update - second_time_update - last_time_update" )
+            #print(str(first_time_update) + " - " + str(second_time_update) + " - " + str(last_time_update))
             first = first_count/(first_time_update - updated_time)
             second = second_count/(second_time_update - first_time_update)
             last = last_count / (last_time_update - second_time_update)
-            print("first - second - last")
-            print(str(first) + " - " + str(second) + " - " + str(last))
+            #print("first - second - last")
+            #print(str(first) + " - " + str(second) + " - " + str(last))
             m = (first + second + last)/3
             S = (math.pow(first -m, 2) + math.pow(second -m, 2) + math.pow(last -m, 2))/3
             d = math.sqrt(S)
-            z_score = (last - m)/d
-            print("m - S - d - z_score")
-            print(str(m) + " - " + str(S) + " - " + str(d) + " - " + str(z_score))
-            sql = "UPDATE articles SET z_score = %s where url = %s"
-            cursor.execute(sql, (z_score, url))
+            if (d != 0):
+                z_score = (last - m)/d
+                #print("m - S - d - z_score")
+                #print(str(m) + " - " + str(S) + " - " + str(d) + " - " + str(z_score))
+                sql = "UPDATE articles SET z_score = %s where url = %s"
+                cursor.execute(sql, (z_score, url))
             
         sql = "UPDATE articles SET comment_count = %s, share_count = %s, like_count = %s, "\
         "facebook_plugin_id = %s , twitter_count = %s, last_time_update = %s where url = %s"
@@ -418,7 +419,7 @@ class IIIDatbaseConnection:
         # article've not been update share count for 15 minuntes
         # and publish in last 36 hour
         try:
-            if (row is not None and (row[0] is None or time.time() - row[0] > 1200) 
+            if (row is not None and (row[0] is None or time.time() - row[0] > 1800) 
                                 and time.time() - row[1] < 129600):
                 return True
             else:
